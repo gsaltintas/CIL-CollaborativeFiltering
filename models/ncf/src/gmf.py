@@ -35,7 +35,8 @@ class GMFEngine(Engine):
         if config['use_cuda'] is True:
             use_cuda(True, config['device_id'])
             self.model.cuda()
-        # Uncomment if want to use pretrained: 
-        # resume_checkpoint(self.model, model_dir=config['pretrain_gmf'], device_id=config['device_id'])
+        
+        if config['use_checkpoint'] is True: 
+            resume_checkpoint(self.model, model_dir=config['checkpoint_loc'], device_id=config['device_id'])
         
         super(GMFEngine, self).__init__(config)

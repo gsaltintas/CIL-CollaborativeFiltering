@@ -81,7 +81,9 @@ class NeuMFEngine(Engine):
         if config['use_cuda'] is True:
             use_cuda(True, config['device_id'])
             self.model.cuda()
-        resume_checkpoint(self.model, model_dir=config['pretrain_neumf'], device_id=config['device_id'])
+
+        if config['use_checkpoint']: 
+            resume_checkpoint(self.model, model_dir=config['checkpoint_loc'], device_id=config['device_id'])
         super(NeuMFEngine, self).__init__(config)
         print(self.model)
 

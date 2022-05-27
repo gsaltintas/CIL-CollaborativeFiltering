@@ -23,7 +23,10 @@ class NeuMF(torch.nn.Module):
         for idx, (in_size, out_size) in enumerate(zip(config['layers'][:-1], config['layers'][1:])):
             self.fc_layers.append(torch.nn.Linear(in_size, out_size))
 
-        self.affine_output = torch.nn.Linear(in_features=config['layers'][-1] + config['latent_dim_mf'], out_features=1)
+        temp = config['mlp_config'] # TODO: NEEDS TO BE SZ OF LAST MLP LAYER + SIZE OF LATENT DIM, WHY NOT TIMES 2? => BECAUSE IT IS JUST MULTIPLICATION
+        MLP_final_layer_size = temp['layers'][-1]
+        GMF_out_dim = config['latent_dim_mf'] # remember it just multiplied the two embeddings together
+        self.affine_output = torch.nn.Linear(in_features=MLP_final_layer_size + GMF_out_dim, out_features=1)
         self.logistic = torch.nn.Sigmoid()
 
     def forward(self, user_indices, item_indices):
@@ -33,7 +36,7 @@ class NeuMF(torch.nn.Module):
         item_embedding_mf = self.embedding_item_mf(item_indices)
 
         mlp_vector = torch.cat([user_embedding_mlp, item_embedding_mlp], dim=-1)  # the concat latent vector
-        mf_vector =torch.mul(user_embedding_mf, item_embedding_mf)
+        mf_vector = torch.mul(user_embedding_mf, item_embedding_mf)
 
         for idx, _ in enumerate(range(len(self.fc_layers))):
             mlp_vector = self.fc_layers[idx](mlp_vector)
@@ -50,7 +53,7 @@ class NeuMF(torch.nn.Module):
     def load_pretrain_weights(self):
         """Loading weights from trained MLP model & GMF model"""
         config = self.config
-        config['latent_dim'] = config['latent_dim_mlp']
+
         mlp_model = MLP(config['mlp_config'])
         if config['use_cuda'] is True:
             mlp_model.cuda()
@@ -61,8 +64,7 @@ class NeuMF(torch.nn.Module):
         for idx in range(len(self.fc_layers)):
             self.fc_layers[idx].weight.data = mlp_model.fc_layers[idx].weight.data
 
-        config['latent_dim'] = config['latent_dim_mf']
-        gmf_model = GMF(config)
+        gmf_model = GMF(config['gmf_config'])
         if config['use_cuda'] is True:
             gmf_model.cuda()
         resume_checkpoint(gmf_model, model_dir=config['pretrain_mf'], device_id=config['device_id'])
@@ -82,10 +84,10 @@ class NeuMFEngine(Engine):
             use_cuda(True, config['device_id'])
             self.model.cuda()
 
-        if config['use_checkpoint']: 
+        if config['use_checkpoint'] is True: 
             resume_checkpoint(self.model, model_dir=config['checkpoint_loc'], device_id=config['device_id'])
         super(NeuMFEngine, self).__init__(config)
         print(self.model)
 
-        if config['pretrain']:
+        if config['pretrain'] is True:
             self.model.load_pretrain_weights()

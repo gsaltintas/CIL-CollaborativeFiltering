@@ -11,7 +11,7 @@ NUM_ITEMS = 1000
 NUM_NEGATIVE = 0 # Don't change this! It gets rid of the weird negative sampling (supposedly)
 
 gmf_config = {'alias': 'gmf_factor8_noneg-explicit',
-              'num_epoch': 1,
+              'num_epoch': 100,
               'batch_size': 256,
               # 'optimizer': 'sgd',
               # 'sgd_lr': 1e-3,
@@ -24,7 +24,7 @@ gmf_config = {'alias': 'gmf_factor8_noneg-explicit',
               'adam_lr': 1e-3,
               'num_users': NUM_USERS,
               'num_items': NUM_ITEMS,
-              'latent_dim': 6,
+              'latent_dim': 8, # also called "num_factors" in the original authors' implementation
               'num_negative': NUM_NEGATIVE,
               'l2_regularization': 0, # 0.01
               'use_cuda': False,
@@ -34,15 +34,15 @@ gmf_config = {'alias': 'gmf_factor8_noneg-explicit',
               'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'}
 
 mlp_config = {'alias': 'mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.0000001',
-              'num_epoch': 1,
-              'batch_size': 256,  # 1024,
+              'num_epoch': 100,
+              'batch_size': 256,
               'optimizer': 'adam',
               'adam_lr': 1e-3,
               'num_users': NUM_USERS,
               'num_items': NUM_ITEMS,
-              'latent_dim': 5,
+              'latent_dim': 32,
               'num_negative': NUM_NEGATIVE,
-              'layers': [-1,64,32,16,8], # First layer specification here is thrown away and replaced by 2*latent_dim, as it should be
+              'layers': [16,64,32,16,8], #  The 0-th layer (embedding layer) is created when MLP object is initialised, so these are the other layers
               'l2_regularization': 0.0000001,  # MLP model is sensitive to hyper params
               'use_cuda': False,
               'device_id': 0,
@@ -54,7 +54,8 @@ mlp_config = {'alias': 'mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.00
 
 neumf_config = {'alias': 'pretrain_neumf_factor8_noneg',
                 'mlp_config': mlp_config,
-                'num_epoch': 1,
+                'gmf_config': gmf_config,
+                'num_epoch': 100,
                 'batch_size': 256,
                 'optimizer': 'adam',
                 'adam_lr': 1e-3,
@@ -63,14 +64,12 @@ neumf_config = {'alias': 'pretrain_neumf_factor8_noneg',
                 'latent_dim_mf': gmf_config['latent_dim'],
                 'latent_dim_mlp': mlp_config['latent_dim'],
                 'num_negative': NUM_NEGATIVE,
-                # TODO: I think the first layer needs to be the sum of the size of the _outputs_ of GMF and MLP! But this is just 2, as the code says? Figure this out...
-                # 'layers': [gmf_config['latent_dim'] + mlp_config['latent_dim'],64,32,16,8],  # layers[0] is the concat of latent user vector & latent item vector if using GMF + MLP as input
-                'layers': [16,64,32,16,8],
+                'layers': mlp_config['layers'], # Change only if you don't want to use MLP with the NeuMF layer. Otherwise they need to match up
                 'l2_regularization': 0.01,
                 'alpha': 0.5,
                 'use_cuda': False,
                 'device_id': 0,
-                'pretrain': True,
+                'pretrain': True, # True if want to use saved GMF + MLP models
                 'pretrain_mf': 'checkpoints/{}'.format('gmf.model'),
                 'pretrain_mlp': 'checkpoints/{}'.format('mlp.model'),
                 'use_checkpoint': False,
@@ -91,7 +90,7 @@ if __name__ == '__main__':
     evaluate_data = sample_generator.evaluate_data
     
     # Specify the exact model from {'GMF', 'MLP', 'NEUMF'}
-    TRAIN_MODEL = 'MLP'
+    TRAIN_MODEL = 'GMF'
 
     if TRAIN_MODEL == 'GMF':
       config = gmf_config

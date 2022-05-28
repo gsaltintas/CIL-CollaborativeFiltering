@@ -42,7 +42,7 @@ mlp_config = {'alias': 'mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.00
               'num_items': NUM_ITEMS,
               'latent_dim': 32,
               'num_negative': NUM_NEGATIVE,
-              'layers': [16,64,32,16,8], #  The 0-th layer (embedding layer) is created when MLP object is initialised, so these are the other layers
+              'layers': [-1,64,32,16,8], #  The layers[0] will be overwritten, see below
               'l2_regularization': 0.0000001,  # MLP model is sensitive to hyper params
               'use_cuda': False,
               'device_id': 0,
@@ -51,6 +51,7 @@ mlp_config = {'alias': 'mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.00
               'use_checkpoint': False, # Resume training from some checkpoint, e.g. if doing pretraining
               'checkpoint_loc': 'checkpoints/{}'.format('mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.0000001_Epoch199_HR0.0879_NDCG0.0373.model'),
               'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'}
+mlp_config['layers'][0] = 2*mlp_config['latent_dim'] # First layer needs to take the concatenation of the latent embeddings
 
 neumf_config = {'alias': 'pretrain_neumf_factor8_noneg',
                 'mlp_config': mlp_config,
@@ -90,7 +91,7 @@ if __name__ == '__main__':
     evaluate_data = sample_generator.evaluate_data
     
     # Specify the exact model from {'GMF', 'MLP', 'NEUMF'}
-    TRAIN_MODEL = 'GMF'
+    TRAIN_MODEL = 'MLP'
 
     if TRAIN_MODEL == 'GMF':
       config = gmf_config

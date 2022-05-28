@@ -23,7 +23,7 @@ class NeuMF(torch.nn.Module):
         for idx, (in_size, out_size) in enumerate(zip(config['layers'][:-1], config['layers'][1:])):
             self.fc_layers.append(torch.nn.Linear(in_size, out_size))
 
-        temp = config['mlp_config'] # TODO: NEEDS TO BE SZ OF LAST MLP LAYER + SIZE OF LATENT DIM, WHY NOT TIMES 2? => BECAUSE IT IS JUST MULTIPLICATION
+        temp = config['mlp_config']
         MLP_final_layer_size = temp['layers'][-1]
         GMF_out_dim = config['latent_dim_mf'] # remember it just multiplied the two embeddings together
         self.affine_output = torch.nn.Linear(in_features=MLP_final_layer_size + GMF_out_dim, out_features=1)

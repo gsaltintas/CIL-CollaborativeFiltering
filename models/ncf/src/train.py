@@ -32,7 +32,7 @@ gmf_config = {'alias': 'gmf',
               'model_dir':'checkpoints/{}_Epoch{}_val_loss{:.4f}.model'}
 
 mlp_config = {'alias': 'mlp',
-              'num_epoch': 1,
+              'num_epoch': 100,
               'batch_size': 256,
               'optimizer': 'adam',
               'adam_lr': 1e-3,

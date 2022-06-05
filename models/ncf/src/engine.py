@@ -3,7 +3,6 @@ from torch.autograd import Variable
 from tensorboardX import SummaryWriter
 
 from utils import save_checkpoint, use_optimizer
-from metrics import MetronAtK
 
 
 class Engine(object):

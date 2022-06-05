@@ -17,8 +17,6 @@ class MLP(torch.nn.Module):
 
         self.fc_layers = torch.nn.ModuleList()
         for idx, (in_size, out_size) in enumerate(zip(config['layers'][:-1], config['layers'][1:])):
-            if (idx == 0): 
-                in_size = 2*self.latent_dim # This is the correct first layer size
             self.fc_layers.append(torch.nn.Linear(in_size, out_size))
 
         self.affine_output = torch.nn.Linear(in_features=config['layers'][-1], out_features=1)

@@ -8,9 +8,8 @@ from utils import extract_users_items_predictions
 
 NUM_USERS = 10000
 NUM_ITEMS = 1000
-NUM_NEGATIVE = 0 # Don't change this! It gets rid of the weird negative sampling (supposedly)
 
-gmf_config = {'alias': 'gmf_factor8_noneg-explicit',
+gmf_config = {'alias': 'gmf',
               'num_epoch': 100,
               'batch_size': 256,
               # 'optimizer': 'sgd',
@@ -25,15 +24,14 @@ gmf_config = {'alias': 'gmf_factor8_noneg-explicit',
               'num_users': NUM_USERS,
               'num_items': NUM_ITEMS,
               'latent_dim': 8, # also called "num_factors" in the original authors' implementation
-              'num_negative': NUM_NEGATIVE,
               'l2_regularization': 0, # 0.01
               'use_cuda': False,
               'device_id': 0,
               'use_checkpoint': False, # Resume training from some checkpoint, e.g. if doing pretraining
-              'checkpoint_loc': 'checkpoints/{}'.format('gmf_factor8_noneg-explicit_Epoch0_HR0.0721_NDCG0.0307.model'),
-              'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'}
+              'checkpoint_loc': 'checkpoints/{}'.format('gmf.model'),
+              'model_dir':'checkpoints/{}_Epoch{}_val_loss{:.4f}.model'}
 
-mlp_config = {'alias': 'mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.0000001',
+mlp_config = {'alias': 'mlp',
               'num_epoch': 100,
               'batch_size': 256,
               'optimizer': 'adam',
@@ -41,19 +39,18 @@ mlp_config = {'alias': 'mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.00
               'num_users': NUM_USERS,
               'num_items': NUM_ITEMS,
               'latent_dim': 32,
-              'num_negative': NUM_NEGATIVE,
               'layers': [-1,64,32,16,8], #  The layers[0] will be overwritten, see below
               'l2_regularization': 0.0000001,  # MLP model is sensitive to hyper params
               'use_cuda': False,
               'device_id': 0,
               'pretrain': False, # pretrain=True uses embedding weights from GMF as initialisation
-              'pretrain_mf': 'checkpoints/{}'.format('gmf_factor8neg4-implict_Epoch23_HR0.1384_NDCG0.0620.model'),
+              'pretrain_mf': 'checkpoints/{}'.format('mlp.model'),
               'use_checkpoint': False, # Resume training from some checkpoint, e.g. if doing pretraining
-              'checkpoint_loc': 'checkpoints/{}'.format('mlp_factor8_noneg_mean_bz256_166432168_pretrain_reg_0.0000001_Epoch199_HR0.0879_NDCG0.0373.model'),
-              'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'}
+              'checkpoint_loc': 'checkpoints/{}'.format('mlp.model'),
+              'model_dir':'checkpoints/{}_Epoch{}_val_loss{:.4f}.model'}
 mlp_config['layers'][0] = 2*mlp_config['latent_dim'] # First layer needs to take the concatenation of the latent embeddings
 
-neumf_config = {'alias': 'pretrain_neumf_factor8_noneg',
+neumf_config = {'alias': 'pretrain_neumf',
                 'mlp_config': mlp_config,
                 'gmf_config': gmf_config,
                 'num_epoch': 100,
@@ -64,7 +61,6 @@ neumf_config = {'alias': 'pretrain_neumf_factor8_noneg',
                 'num_items': NUM_ITEMS,
                 'latent_dim_mf': gmf_config['latent_dim'],
                 'latent_dim_mlp': mlp_config['latent_dim'],
-                'num_negative': NUM_NEGATIVE,
                 'layers': mlp_config['layers'], # Change only if you don't want to use MLP with the NeuMF layer. Otherwise they need to match up
                 'l2_regularization': 0.01,
                 'alpha': 0.5,
@@ -74,8 +70,8 @@ neumf_config = {'alias': 'pretrain_neumf_factor8_noneg',
                 'pretrain_mf': 'checkpoints/{}'.format('gmf.model'),
                 'pretrain_mlp': 'checkpoints/{}'.format('mlp.model'),
                 'use_checkpoint': False,
-                'checkpoint_loc': 'checkpoints/{}'.format('pretrain_neumf_factor8_noneg_Epoch23_HR0.0000_NDCG0.0000.model'),
-                'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'
+                'checkpoint_loc': 'checkpoints/{}'.format('pretrain_neumf.model'),
+                'model_dir':'checkpoints/{}_Epoch{}_val_loss{:.4f}.model'
                 }
 
 
@@ -110,7 +106,7 @@ if __name__ == '__main__':
     for epoch in range(config['num_epoch']):
         print('Epoch {} starts !'.format(epoch))
         print('-' * 80)
-        train_loader = sample_generator.instance_a_train_loader(config['num_negative'], config['batch_size'])
+        train_loader = sample_generator.instance_a_train_loader(config['batch_size'])
         engine.train_an_epoch(train_loader, epoch_id=epoch)
-        hit_ratio, ndcg = engine.evaluate(evaluate_data, epoch_id=epoch)
-        engine.save(config['alias'], epoch, hit_ratio, ndcg)
+        validation_loss = engine.evaluate(evaluate_data, epoch_id=epoch)
+        engine.save(config['alias'], epoch, validation_loss)

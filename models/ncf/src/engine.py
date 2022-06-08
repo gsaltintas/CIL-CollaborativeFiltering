@@ -19,7 +19,7 @@ class Engine(object):
         self.crit = torch.nn.MSELoss()
 
     def train_single_batch(self, users, items, ratings):
-        assert hasattr(self, 'model'), 'Please specify the exact model !'
+        assert hasattr(self, 'model'), 'Please specify the exact model!'
         if self.config['use_cuda'] is True:
             users, items, ratings = users.cuda(), items.cuda(), ratings.cuda()
         self.opt.zero_grad()
@@ -27,11 +27,11 @@ class Engine(object):
         loss = self.crit(ratings_pred.view(-1), ratings)
         loss.backward()
         self.opt.step()
-        loss = loss.item()
+        loss = (torch.sqrt(loss)).item() # Train with MSE but report RMSE
         return loss
 
     def train_an_epoch(self, train_loader, epoch_id):
-        assert hasattr(self, 'model'), 'Please specify the exact model !'
+        assert hasattr(self, 'model'), 'Please specify the exact model!'
         self.model.train()
         total_loss = 0
         for batch_id, batch in enumerate(train_loader):
@@ -39,24 +39,24 @@ class Engine(object):
             user, item, rating = batch[0], batch[1], batch[2]
             rating = rating.float()
             loss = self.train_single_batch(user, item, rating)
-            if batch_id % int(len(train_loader) * 0.20) == 0: print('[Training Epoch {}] Batch {}, Loss {}'.format(epoch_id, batch_id, loss))
+            if batch_id % int(len(train_loader) * 0.2) == 0: print('[Training Epoch {}] Batch {}, RMSE loss {}'.format(epoch_id, batch_id, loss))
             total_loss += loss
         self._writer.add_scalar('model/loss', total_loss, epoch_id)
 
     def evaluate(self, evaluate_data, epoch_id):
-        assert hasattr(self, 'model'), 'Please specify the exact model !'
+        assert hasattr(self, 'model'), 'Please specify the exact model!'
         self.model.eval()
         with torch.no_grad():
             test_users, test_items, test_ratings = evaluate_data[0], evaluate_data[1], evaluate_data[2]
             ratings_pred = self.model(test_users, test_items)
-            loss = self.crit(ratings_pred.view(-1), test_ratings)
+            loss = torch.sqrt(self.crit(ratings_pred.view(-1), test_ratings))
 
         self._writer.add_scalar('performance/val_loss', loss, epoch_id)
-        print('[Evluating Epoch {}] loss = {:.4f}'.format(epoch_id, loss))
+        print('[Evaluating epoch {}] RMSE loss = {:.4f}'.format(epoch_id, loss))
 
         return loss.item()
 
     def save(self, alias, epoch_id, validation_loss):
-        assert hasattr(self, 'model'), 'Please specify the exact model !'
+        assert hasattr(self, 'model'), 'Please specify the exact model!'
         model_dir = self.config['model_dir'].format(alias, epoch_id, validation_loss)
         save_checkpoint(self.model, model_dir)

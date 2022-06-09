@@ -5,7 +5,7 @@ import math
 import os
 import sys
 
-from surprise import SVD, NMF, KNNBaseline, SVDpp, KNNBasic
+from surprise import SVD, NMF, KNNBaseline, SVDpp, KNNBasic, SlopeOne, CoClustering
 from surprise import Dataset, Reader
 from surprise.model_selection import GridSearchCV
 
@@ -61,6 +61,58 @@ def run_svd(data, sub_data, sub_users, sub_movies):
   svd_df.to_csv('./results/SVDpreds.csv', index=False)
   print('Saved predictions for SVD')
 
+def run_svdpp(data, sub_data, sub_users, sub_movies):
+  #init svd
+  print('running svdpp')
+  algo = SVDpp
+  param_dict = {
+    'n_factors':[150, 200],#[20, 50, 150],
+    'n_epochs':[30, 60],#[20, 30],
+    'lr_all':[0.005, 0.001], #, 0.01],#[0.005, 0.05],
+    'reg_all':[0.1, 0.2],#[0.02, 0.1],
+    'random_state':[42]
+    }
+
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=20, joblib_verbose=1)
+
+  gsCV.fit(data)
+
+  print(' #### Printing best values of SVDpp run #### ')
+  print_gscv_values(gsCV=gsCV)
+
+  sub_preds = do_preds(gsCV.best_estimator['rmse'], sub_data)
+  svd_df = pd.DataFrame()
+  svd_df['users'] = sub_users
+  svd_df['movies'] = sub_movies
+  svd_df['preds'] = sub_preds
+  svd_df.to_csv('./results/SVDpp-preds.csv', index=False)
+  print('Saved predictions for SVDpp')
+
+def run_cocluster(data, sub_data, sub_users, sub_movies):
+  #init CoClustering
+  print('running coclustering')
+  algo = CoClustering
+  param_dict = {
+    'n_cltr_u':[3,4,6],
+    'n_cltr_i':[8,10,20],
+    'n_epochs':[20,40,60],
+    'random_state':[42]
+    }
+
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=10, joblib_verbose=1)
+
+  gsCV.fit(data)
+
+  print(' #### Printing best values of CoClustering run #### ')
+  print_gscv_values(gsCV=gsCV)
+
+  sub_preds = do_preds(gsCV.best_estimator['rmse'], sub_data)
+  svd_df = pd.DataFrame()
+  svd_df['users'] = sub_users
+  svd_df['movies'] = sub_movies
+  svd_df['preds'] = sub_preds
+  svd_df.to_csv('./results/CoCluster-preds.csv', index=False)
+  print('Saved predictions for CoCluster')
 
 def run_nmf(data, sub_data, sub_users, sub_movies):
   #init nmf
@@ -88,7 +140,6 @@ def run_nmf(data, sub_data, sub_users, sub_movies):
   nmf_df['preds'] = sub_preds
   nmf_df.to_csv('./results/NMFpreds.csv', index=False)
   print('Saved predictions for NMF')
-
 
 def run_knn(data, sub_data, sub_users, sub_movies):
   #init knn
@@ -143,6 +194,20 @@ def run_nmf_single(data, sub_data, sub_users, sub_movies):
   nmf_df.to_csv('./results/NMFpreds.csv', index=False)
   print('Saved predictions for NMF')
 
+def run_s1_single(data, sub_data, sub_users, sub_movies):
+  print('running s1 single model')
+  trainset = data.build_full_trainset()
+  model = SlopeOne()
+  model.fit(trainset)
+
+  sub_preds = do_preds(model, sub_data)
+  svd_df = pd.DataFrame()
+  svd_df['users'] = sub_users
+  svd_df['movies'] = sub_movies
+  svd_df['preds'] = sub_preds
+  svd_df.to_csv('./results/S1preds.csv', index=False)
+  print('Saved predictions for S1')
+
 
 if __name__ == "__main__":
 
@@ -169,7 +234,13 @@ if __name__ == "__main__":
 
   if (cmdline == 'svd'):
     run_svd_single(data, sub_data, sub_users, sub_movies)
+  elif (cmdline == 'svdpp'):
+    run_svdpp(data, sub_data, sub_users, sub_movies)
+  elif (cmdline == 'cluster'):
+    run_cocluster(data, sub_data, sub_users, sub_movies)
   elif (cmdline == 'nmf'):
     run_nmf_single(data, sub_data, sub_users, sub_movies)
+  elif (cmdline == 's1'):
+    run_s1_single(data, sub_data, sub_users, sub_movies)
   else:
     run_knn(data, sub_data, sub_users, sub_movies)

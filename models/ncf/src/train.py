@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import torch
 from gmf import GMFEngine
 from mlp import MLPEngine
 from neumf import NeuMFEngine
@@ -8,6 +9,9 @@ from utils import extract_users_items_predictions
 
 NUM_USERS = 10000
 NUM_ITEMS = 1000
+NUM_THREADS = 12
+
+torch.set_num_threads(NUM_THREADS)
 
 gmf_config = {'alias': 'gmf',
               'num_epoch': 100,
@@ -104,7 +108,7 @@ if __name__ == '__main__':
       engine = NeuMFEngine(config)
 
     for epoch in range(config['num_epoch']):
-        print('Epoch {} starts !'.format(epoch))
+        print('Epoch {} starts!'.format(epoch))
         print('-' * 80)
         train_loader = sample_generator.instance_a_train_loader(config['batch_size'])
         engine.train_an_epoch(train_loader, epoch_id=epoch)

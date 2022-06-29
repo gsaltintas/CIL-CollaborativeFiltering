@@ -9,3 +9,6 @@ Please clone the repository to Euler. And run `bash setup.sh` in your folder dir
 
 ## Notebook
 Modify `run_nb.sh` accordingly and run `bash run_nb.sh` from your local machine.
+
+# Optuna
+To use Optuna with storage you need to create a database file. Run `echo >> cil.db`. 

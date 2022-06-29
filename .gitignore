@@ -4,6 +4,17 @@ __pycache__/
 som/
 checkpoints/*
 .ipynb_checkpoints/
+false/*
 
+results/*
+wandb/*
+
+# logs from euler
+*.err
+*.out
+
+# optuna databases
+*.db
 
 reconnect_info
+

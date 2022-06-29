@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import surprise
+from sklearn.model_selection import train_test_split
 from surprise import SVD, Dataset, Reader, SVDpp
 
 
@@ -15,17 +16,32 @@ def extract_users_items_predictions(data_pd):
     return users, movies, predictions
 
 
-def get_trainset():
+def get_trainset(random_state):
     data_pd = pd.read_csv("./data/data_train.csv")
 
-    train_users, train_movies, train_predictions = extract_users_items_predictions(
-        data_pd
-    )  # use whole data bc doing gridsearchcv
+    # Split the dataset into train and test
+    train_size = 0.9
 
+    train_pd, valid_pd = train_test_split(data_pd, train_size=train_size, random_state=random_state)
+
+    train_users, train_movies, train_predictions = extract_users_items_predictions(
+        train_pd
+    )  # use whole data bc doing gridsearchcv
     train_df = pd.DataFrame()
     train_df["users"] = train_users
     train_df["movies"] = train_movies
     train_df["ratings"] = train_predictions
+
+    valid_users, valid_movies, valid_predictions = extract_users_items_predictions(
+        valid_pd
+    )  # use whole data bc doing gridsearchcv
+    valid_df = pd.DataFrame()
+    valid_df["users"] = valid_users
+    valid_df["movies"] = valid_movies
+    valid_df["ratings"] = valid_predictions
+    train_users, train_movies, train_predictions = extract_users_items_predictions(
+        data_pd
+    )  # use whole data bc doing gridsearchcv
 
     data = Dataset.load_from_df(train_df, Reader(rating_scale=(1, 5)))
     # required to directly call fit
@@ -83,10 +99,10 @@ class SVD_(SVD):
             **kwargs
         )
         if trainset is None:
-            trainset = get_trainset()
+            trainset = get_trainset(random_state=self.random_state)
         if type(trainset) != surprise.trainset.Trainset:
             trainset = trainset.build_full_trainset()
-        # self.trainset = get_trainset()
+        # self.trainset = get_trainset(random_state=self.random_state)
         self.trainset = trainset
 
     def get_params(self, deep=None):
@@ -175,7 +191,7 @@ class SVDpp_(SVDpp):
         self.lr_all = lr_all
         self.reg_all = reg_all
         if trainset is None:
-            trainset = get_trainset()
+            trainset = get_trainset(random_state=self.random_state)
         if type(trainset) != surprise.trainset.Trainset:
             trainset = trainset.build_full_trainset()
         self.trainset = trainset

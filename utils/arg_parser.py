@@ -2,7 +2,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from utils.config import Config
+from config import Config
 
 config = Config()
 logger = logging.getLogger(__name__)

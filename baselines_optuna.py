@@ -8,7 +8,7 @@ import pandas as pd
 import surprise
 from optuna.integration.wandb import WeightsAndBiasesCallback
 from sklearn.model_selection import train_test_split
-from surprise import Reader
+from surprise import Dataset, Reader
 from surprise.accuracy import rmse
 
 import wandb
@@ -103,7 +103,10 @@ def objective(trial):
     data = Dataset.load_from_df(train_df, Reader(rating_scale=(1, 5)))
     if isinstance(data, surprise.dataset.DatasetAutoFolds):
         data = data.build_full_trainset()
-    a = algo(verbose=config.verbose, **params)
+    a = algo(trainset=data, verbose=config.verbose, **params)
+    if config.use_wandb:
+        wandb.define_metric("trial_id")
+        wandb.log(params, step=trial.trial_id)
     a.fit(X, y)
     score = np.mean(0.5 * np.square(a.predict(X) - y))
     logger.info(f" Train Value: {score}")
@@ -115,7 +118,6 @@ def objective(trial):
         wandb.log(
             {"train-rmse": score, "val-rmse": score_val, "trial_id": trial._trial_id}, step=trial.trial_id
         )
-        wandb.log(params)
         files = wandb.config['submission_files']
         files.append(submission_file)
         wandb.config.update({'submissions_files': files})

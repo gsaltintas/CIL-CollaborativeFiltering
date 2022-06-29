@@ -83,16 +83,20 @@ def objective(trial):
             "reg_all": trial.suggest_float("reg_all", 1e-3, 0.1),
             # "random_state": trial.suggest_int("random_state", 42, 42),
             "random_state": config.seed,
+            "init_mean": trial.suggest_float("init_mean", 0, 3),
+            "init_std_dev": trial.suggest_float("init_std_dev", 0.1, 1),
         }
     elif config.algo == "svdpp":
         algo = SVDpp_
         params = {
-            "n_factors": trial.suggest_int("n_factors", 15, 50),
+            "n_factors": trial.suggest_int("n_factors", 10, 200),
             "lr_all": trial.suggest_float("lr_all", 1e-5, 0.1),
             "reg_all": trial.suggest_float("reg_all", 1e-3, 0.1),
             "n_epochs": trial.suggest_int("n_epochs", 15, 25),
             # "random_state": trial.suggest_int("random_state", 42, 42),
             "random_state": config.seed,
+            "init_mean": trial.suggest_float("init_mean", 0, 3),
+            "init_std_dev": trial.suggest_float("init_std_dev", 0.1, 1),
         }
     else:
         raise ValueError(f"Optuna search not implemented for {config.algo}")
@@ -105,14 +109,17 @@ def objective(trial):
     logger.info(f" Train Value: {score}")
     score_val = np.mean(0.5 * np.square(a.predict(X_val) - y_val))
     logger.info(f" Validation Value: {score_val}")
+    submission_file = f"{trial._trial_id}_t-{score}_v-{score_val:.3f}"
     if config.use_wandb:
         wandb.define_metric("trial_id")
         wandb.log(
             {"train-rmse": score, "val-rmse": score_val, "trial_id": trial._trial_id}, step=trial.trial_id
         )
         wandb.log(params)
+        files = wandb.config['submission_files']
+        files.append(submission_file)
+        wandb.config.update({'submissions_files': files})
 
-    submission_file = f"{trial._trial_id}_t-{score}_v-{score_val:.3f}"
     write_submission(a, submission_file)
     print(f"Saved predictions for {config.algo}")
 
@@ -146,6 +153,7 @@ if __name__ == "__main__":
         callbacks=callbacks,
         n_jobs=config.n_jobs,
     )
+    # doesnt reach here within the limits of euler
     trials = study.trials
     df = study.trials_dataframe()
     if config.use_wandb:

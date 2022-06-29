@@ -1,6 +1,6 @@
 #!/bin/bash
 #BSUB -n 4                      # 32 cores
-#BSUB -W 10:00                   # 4-hour run-time
+#BSUB -W 72:00                   # 4-hour run-time
 #BSUB -R "rusage[mem=2000, scratch=1000]"     # 4000 MB per core
 #BSUB -J cilOptuna
 #BSUB -o "/cluster/home/galtintas/cil/cilOptuna.out"

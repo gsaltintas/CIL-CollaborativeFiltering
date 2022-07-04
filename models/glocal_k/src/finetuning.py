@@ -71,4 +71,4 @@ class GLocalKFine(pl.LightningModule):
         self.log('test_rmse', test_rmse)
 
     def configure_optimizers(self):
-        return torch.optim.LBFGS(self.local_kernel.parameters(), max_iter=self.iter_f)
+        return torch.optim.LBFGS(self.parameters(), max_iter=self.iter_f)

@@ -52,7 +52,7 @@ if __name__ == '__main__':
         save_last=True
     )
     finetuning_trainer = pl.Trainer(callbacks=[finetuning_checkpoint],
-                                    max_epochs=epoch_p,
+                                    max_epochs=epoch_f,
                                     log_every_n_steps=1,
                                     replace_sampler_ddp=False
                                     )

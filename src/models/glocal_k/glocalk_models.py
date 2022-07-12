@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from transformers import WarmUp
+import numpy as np
 
 
 class LocalKernelLayer(torch.nn.Module):
@@ -9,13 +9,15 @@ class LocalKernelLayer(torch.nn.Module):
         self.activation = activation
 
         self.W = torch.nn.parameter.Parameter(
-            torch.rand(size=(n_in, n_hid)))  # TODO init
+            torch.rand(size=(n_in, n_hid))*2*np.sqrt(6 / (
+                n_in + n_hid))-np.sqrt(6 / (
+                    n_in + n_hid)), requires_grad=True)
         self.u = torch.nn.parameter.Parameter(torch.normal(
-            0, 1e-3, size=(n_in, 1, n_dim), requires_grad=True))
+            0, 1e-3, size=(n_in, 1, n_dim)), requires_grad=True)
         self.v = torch.nn.parameter.Parameter(torch.normal(
-            0, 1e-3, size=(1, n_hid, n_dim), requires_grad=True))
+            0, 1e-3, size=(1, n_hid, n_dim)), requires_grad=True)
         self.b = torch.nn.parameter.Parameter(
-            torch.rand(size=(n_hid,), requires_grad=True))
+            torch.rand(size=(n_hid,)), requires_grad=True)
 
         self.lambda_s = lambda_s
         self.lambda_2 = lambda_2
@@ -61,8 +63,11 @@ class GlobalKernel(torch.nn.Module):
         self.gk_size = gk_size
         self.dot_scale = dot_scale
 
+        conv_kernel_ = torch.empty(size=(n_kernel, self.gk_size**2))
+        torch.nn.init.trunc_normal_(conv_kernel_, 0, 0.1)
+
         self.conv_kernel = torch.nn.parameter.Parameter(
-            torch.normal(0, 0.1, size=(n_kernel, self.gk_size**2)))
+            conv_kernel_, requires_grad=True)
 
     def forward(self, x):
         # Item (dim=1) based average pooling

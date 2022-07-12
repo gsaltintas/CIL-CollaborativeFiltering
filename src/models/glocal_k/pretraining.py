@@ -58,4 +58,4 @@ class GLocalKPre(pl.LightningModule):
         self.log('pre_test_rmse', test_rmse)
 
     def configure_optimizers(self):
-        return torch.optim.LBFGS(self.local_kernel.parameters(), max_iter=self.iter_p)
+        return torch.optim.LBFGS(self.local_kernel.parameters(), max_iter=self.iter_p, history_size=10, lr=1e-1)

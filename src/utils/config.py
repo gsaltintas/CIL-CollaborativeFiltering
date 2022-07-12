@@ -21,25 +21,65 @@ class Config(object, metaclass=Singleton):
     # experiment
     project = "cil-project"
     entity = "gsaltintas"
-    experiment = "optuna"
-    algo = "svd"  # options: "svd", "svdpp"
+    experiment_dir = "." #"/cluster/home/galtintas/scratch/"
+    experiment_type = "optuna" # "optuna", "train", "gridsearch"
+    algo = "svd"  # options: "svd", "svdpp", "glocalk"
     use_wandb = False
+    home = "/home/gsa/code"
+    seed = 42
+    train_size = 0.8 # train-val split ratio
+
+    # optuna
     n_trials = 100
     timeout = None
     verbose = 2
     enable_pruning = False
+    pruner = "median"
     n_jobs = 1
     dir = Path(f"/cluster/home/galtintas/cil/results/{time}").as_posix()
     direction = "minimize"
-    scoring = "neg_mean_squared_error"
-    home = "/home/gsa/code"
+    scoring = "rmse"
     submission_files = []
-    seed = 42
+    # grid search
+    refit=True
 
+    # baselines
+    n_factors = 66
+    biased = True
+    lr_all = 0.014
+    reg_all = 0.09
+    init_mean = 0
+    init_std_dev = 0.1
+    n_epochs = 100
+    # co-cluster:
+    n_cltr_u=4
+    n_cltr_i=10
+    # nmf
+    reg_pu= 0.06
+    reg_qi=0.02
     # rl config
     learning_rate = 3e-4
     batch_size = 64
     seed = 0
+    # knn
+    k=25
+    sim_options_name="pearson_baseline"
+    sim_options_shrinkage="0"
+    bsl_options_name="als"
+
+    # glocal config
+    NUM_WORKERS = 8
+    n_hid = 500
+    n_dim = 5
+    n_layers = 3
+    gk_size = 7
+    lambda_2 = 20.  # l2 regularisation
+    lambda_s = 0.006
+    iter_p = 5  # optimisation
+    iter_f = 5
+    epoch_p = 30
+    epoch_f = 60
+    dot_scale = 1  # scaled dot product
 
     def __new__(cls):
         __instance = super().__new__(cls)

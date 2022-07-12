@@ -1,14 +1,20 @@
-import numpy as np 
-import pandas as pd 
-import math
-
-import os
-import sys
-
-from surprise import SVD, NMF, KNNBaseline, SVDpp, KNNBasic, SlopeOne, CoClustering
-from surprise import Dataset, Reader
+import numpy as np
+import pandas as pd
+from surprise import (
+    NMF,
+    SVD,
+    CoClustering,
+    Dataset,
+    KNNBaseline,
+    Reader,
+    SlopeOne,
+    SVDpp,
+)
 from surprise.model_selection import GridSearchCV
 
+from utils import DATA_PATH, Config, script_init_common
+
+config = Config()
 ### to run script, must pass argument to indicate which algorithm to use
 ### possibilities are: svd, nmf, knn
 
@@ -46,7 +52,7 @@ def run_svd(data, sub_data, sub_users, sub_movies):
     'random_state':[42]
     }
 
-  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=10, joblib_verbose=1)
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=config.refit, n_jobs=config.n_jobs, joblib_verbose=1)
 
   gsCV.fit(data)
 
@@ -73,7 +79,7 @@ def run_svdpp(data, sub_data, sub_users, sub_movies):
     'random_state':[42]
     }
 
-  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=20, joblib_verbose=1)
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=config.refit, n_jobs=config.n_jobs, joblib_verbose=1)
 
   gsCV.fit(data)
 
@@ -99,7 +105,7 @@ def run_cocluster(data, sub_data, sub_users, sub_movies):
     'random_state':[42]
     }
 
-  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=10, joblib_verbose=1)
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=config.refit, n_jobs=config.n_jobs, joblib_verbose=1)
 
   gsCV.fit(data)
 
@@ -126,7 +132,7 @@ def run_nmf(data, sub_data, sub_users, sub_movies):
     'random_state':[42]
     }
 
-  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=10, joblib_verbose=1)
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=config.refit, n_jobs=config.n_jobs, joblib_verbose=1)
 
   gsCV.fit(data)
 
@@ -151,7 +157,7 @@ def run_knn(data, sub_data, sub_users, sub_movies):
     'bsl_options': {'name': ['als', 'sgd']}
     }
 
-  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=True, n_jobs=10, joblib_verbose=1)
+  gsCV = GridSearchCV(algo_class=algo, param_grid=param_dict, refit=config.refit, n_jobs=config.n_jobs, joblib_verbose=1)
 
   gsCV.fit(data)
 
@@ -208,13 +214,11 @@ def run_s1_single(data, sub_data, sub_users, sub_movies):
   svd_df.to_csv('./results/S1preds.csv', index=False)
   print('Saved predictions for S1')
 
-
-if __name__ == "__main__":
-
+def run_grid_search():
   ### get data
   #number_of_users, number_of_movies = (10000, 1000)
-  data_pd = pd.read_csv('./data/data_train.csv')
-  sub_pd = pd.read_csv('./data/sampleSubmission.csv')
+  data_pd = pd.read_csv(DATA_PATH + 'data_train.csv')
+  sub_pd = pd.read_csv(DATA_PATH + 'sampleSubmission.csv')
 
   train_users, train_movies, train_predictions = extract_users_items_predictions(data_pd) #use whole data bc doing gridsearchcv
 
@@ -229,18 +233,21 @@ if __name__ == "__main__":
 
   sub_data = zip(sub_users, sub_movies)
 
-  ### run selected model
-  cmdline = sys.argv[1] #arg 0 is name of file
-
-  if (cmdline == 'svd'):
+  if (config.algo == 'svd'):
     run_svd_single(data, sub_data, sub_users, sub_movies)
-  elif (cmdline == 'svdpp'):
+  elif (config.algo == 'svdpp'):
     run_svdpp(data, sub_data, sub_users, sub_movies)
-  elif (cmdline == 'cluster'):
+  elif (config.algo == 'cluster'):
     run_cocluster(data, sub_data, sub_users, sub_movies)
-  elif (cmdline == 'nmf'):
+  elif (config.algo == 'nmf'):
     run_nmf_single(data, sub_data, sub_users, sub_movies)
-  elif (cmdline == 's1'):
+  elif (config.algo == 's1'):
     run_s1_single(data, sub_data, sub_users, sub_movies)
-  else:
+  elif (config.algo == 'knn'):
     run_knn(data, sub_data, sub_users, sub_movies)
+  else:
+    raise ValueError("Unkown algo, available: svd, svdpp, coclustering, nmf, knn, s1")
+
+if __name__ == "__main__":
+  config = script_init_common()
+  run_grid_search()

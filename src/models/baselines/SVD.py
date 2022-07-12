@@ -4,6 +4,8 @@ import surprise
 from sklearn.model_selection import train_test_split
 from surprise import SVD, Dataset, Reader, SVDpp
 
+from utils import DATA_PATH
+
 
 def extract_users_items_predictions(data_pd):
     users, movies = [
@@ -17,10 +19,10 @@ def extract_users_items_predictions(data_pd):
 
 
 def get_trainset(random_state):
-    data_pd = pd.read_csv("./data/data_train.csv")
+    data_pd = pd.read_csv(DATA_PATH + "/data_train.csv")
 
     # Split the dataset into train and test
-    train_size = 0.9
+    train_size = 0.8
 
     train_pd, valid_pd = train_test_split(data_pd, train_size=train_size, random_state=random_state)
 

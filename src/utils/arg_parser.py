@@ -2,7 +2,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from config import Config
+from .config import Config
 
 config = Config()
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def _convert_cli_arg_type(key, value):
 
 
 def script_init_common():
-    parser = argparse.ArgumentParser(description="Run Value of Information Experiment.")
+    parser = argparse.ArgumentParser(description="CIL Project - meowtrix-purrdiction Group.")
     parser.add_argument(
         "-v",
         type=str,

@@ -18,3 +18,7 @@ wandb/*
 
 reconnect_info
 
+build/*
+dist/*
+*.egg-info/
+src/false/*

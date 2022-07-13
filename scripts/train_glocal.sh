@@ -11,7 +11,7 @@
 
 source /cluster/apps/local/env2lmod.sh  # Switch to the new software stack
 module load gcc/8.2.0 python/3.8.5 eth_proxy
-module load gcc/8.2.0 python_gpu/3.8.5 cuda/11.3.1 eth_proxy
+# module load gcc/8.2.0 python_gpu/3.8.5 cuda/11.3.1/ eth_proxy
 date; echo; echo
 module list
 # nvidia-smi; echo; echo
@@ -22,8 +22,8 @@ cd /cluster/home/$USER/cil/src
 
 python -m train --use-wandb True --experiment-dir $SCRATCH/cil \
      --experiment-type train --algo glocal_k \
-    --n-trials 1  --enable-pruning True \
-    --NUM-WORKERS 8 --iter-p=50 --iter-f=10
+    --n-trials 10  --enable-pruning True \
+    --NUM-WORKERS 8 --iter-p=5 --iter-f=5
     # --n-epochs 1 --epoch-p 1 --epoch-f 1 
 date; echo; echo
 

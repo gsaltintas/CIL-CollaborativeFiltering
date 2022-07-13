@@ -13,7 +13,7 @@ class GLocalKFine(pl.LightningModule):
         dot_scale,
         n_m,
         local_kernel_checkpoint,
-        use_wandb: bool=False,
+        lr: float = 0.1,
         **kwargs
     ):
         super().__init__()
@@ -26,7 +26,7 @@ class GLocalKFine(pl.LightningModule):
         self.local_kernel.mode = 'train'
 
         self.global_kernel = GlobalKernel(n_m, gk_size, dot_scale)
-        self.use_wandb = use_wandb
+        self.lr = lr
 
     def forward(self, x):
         y_dash, _ = self.local_kernel(x)
@@ -72,6 +72,7 @@ class GLocalKFine(pl.LightningModule):
 
         self.log('fine_train_rmse', train_rmse)
         self.log('fine_test_rmse', test_rmse)
+        self.log('test_rmse', test_rmse)
 
     def configure_optimizers(self):
-        return torch.optim.LBFGS(self.parameters(), max_iter=self.iter_f, history_size=10, lr=1e-1)
+        return torch.optim.LBFGS(self.parameters(), max_iter=self.iter_f, history_size=10, lr=self.lr)

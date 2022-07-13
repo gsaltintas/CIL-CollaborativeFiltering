@@ -14,6 +14,7 @@ class GLocalKPre(pl.LightningModule):
         lambda_s,
         iter_p,  # optimisation
         n_u,
+        lr: float = 0.1,
         **kwargs
     ):
         super().__init__()
@@ -23,6 +24,7 @@ class GLocalKPre(pl.LightningModule):
 
         self.local_kernel = LocalKernel(
             n_layers, n_u, n_hid, n_dim, torch.sigmoid, lambda_s, lambda_2)
+        self.lr = lr
 
     def forward(self, x):
         return self.local_kernel(x)
@@ -56,6 +58,7 @@ class GLocalKPre(pl.LightningModule):
 
         self.log('pre_train_rmse', train_rmse)
         self.log('pre_test_rmse', test_rmse)
+        self.log('test_rmse', test_rmse)
 
     def configure_optimizers(self):
-        return torch.optim.LBFGS(self.local_kernel.parameters(), max_iter=self.iter_p, history_size=10, lr=1e-1)
+        return torch.optim.LBFGS(self.local_kernel.parameters(), max_iter=self.iter_p, history_size=10, lr=self.lr)

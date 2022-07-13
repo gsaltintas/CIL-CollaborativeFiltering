@@ -12,6 +12,7 @@ def extract_users_items_predictions(data_pd):
 
 
 def load_data_cil(path='./', frac=0.1, seed=1234):
+    typ='float32'
     data_pd = pd.read_csv(path+'data_train.csv')
     users, movies, predictions = extract_users_items_predictions(data_pd)
     data = pd.DataFrame.from_dict(
@@ -32,8 +33,8 @@ def load_data_cil(path='./', frac=0.1, seed=1234):
     idx = np.arange(n_r)
     np.random.shuffle(idx)
 
-    train_r = np.zeros((n_m, n_u), dtype='float64')
-    test_r = np.zeros((n_m, n_u), dtype='float64')
+    train_r = np.zeros((n_m, n_u), dtype='float32')
+    test_r = np.zeros((n_m, n_u), dtype='float32')
     #  dtype=torch.double
 
     for i in range(n_r):
@@ -47,8 +48,8 @@ def load_data_cil(path='./', frac=0.1, seed=1234):
             train_r[m_id, u_id] = r
 
     # masks indicating non-zero entries
-    train_m = np.greater(train_r, 1e-12).astype('float64')
-    test_m = np.greater(test_r, 1e-12).astype('float64')
+    train_m = np.greater(train_r, 1e-12).astype('float32')
+    test_m = np.greater(test_r, 1e-12).astype('float32')
 
     print('data matrix loaded')
     print('num of users: {}'.format(n_u))

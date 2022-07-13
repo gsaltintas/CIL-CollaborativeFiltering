@@ -10,7 +10,7 @@ from optuna.integration.wandb import WeightsAndBiasesCallback
 from sklearn.model_selection import train_test_split
 from surprise import Dataset, Reader
 
-from utils import DATA_PATH, Config, script_init_common
+from utils import DATA_PATH, DB_PATH, Config, script_init_common
 
 from .SVD import SVD_, SVDpp_
 
@@ -141,7 +141,7 @@ def run_optuna_baselines():
     saves a submission file for each trial
     """
     storage = optuna.storages.RDBStorage(
-        url=f"sqlite:///{Path(config.home).joinpath('cil', 'cil.db')}",
+        url=f"sqlite:///{DB_PATH}",
         engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
     )
     logger.info("Trying with optuna storage")

@@ -13,7 +13,8 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(
+                Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
 
@@ -21,13 +22,12 @@ class Config(object, metaclass=Singleton):
     # experiment
     project = "cil-project"
     entity = "gsaltintas"
-    experiment_dir = "." #"/cluster/home/galtintas/scratch/"
-    experiment_type = "optuna" # "optuna", "train", "gridsearch"
-    algo = "svd"  # options: "svd", "svdpp", "glocalk"
+    experiment_dir = "."  # "/cluster/home/galtintas/scratch/"
+    experiment_type = "optuna"  # "optuna", "train", "gridsearch"
+    algo = "svd"  # options: "svd", "svdpp", "glocal_k"
     use_wandb = False
-    home = "/home/gsa/code"
     seed = 42
-    train_size = 0.8 # train-val split ratio
+    train_size = 0.8  # train-val split ratio
 
     # optuna
     n_trials = 100
@@ -36,12 +36,13 @@ class Config(object, metaclass=Singleton):
     enable_pruning = False
     pruner = "median"
     n_jobs = 1
-    dir = Path(f"/cluster/home/galtintas/cil/results/{time}").as_posix()
     direction = "minimize"
     scoring = "rmse"
-    submission_files = []
+    n_startup_trials = 5
+    n_warump_steps = 20
+    
     # grid search
-    refit=True
+    refit = True
 
     # baselines
     n_factors = 66
@@ -52,20 +53,20 @@ class Config(object, metaclass=Singleton):
     init_std_dev = 0.1
     n_epochs = 100
     # co-cluster:
-    n_cltr_u=4
-    n_cltr_i=10
+    n_cltr_u = 4
+    n_cltr_i = 10
     # nmf
-    reg_pu= 0.06
-    reg_qi=0.02
+    reg_pu = 0.06
+    reg_qi = 0.02
     # rl config
     learning_rate = 3e-4
     batch_size = 64
     seed = 0
     # knn
-    k=25
-    sim_options_name="pearson_baseline"
-    sim_options_shrinkage="0"
-    bsl_options_name="als"
+    k = 25
+    sim_options_name = "pearson_baseline"
+    sim_options_shrinkage = "0"
+    bsl_options_name = "als"
 
     # glocal config
     NUM_WORKERS = 8
@@ -80,6 +81,8 @@ class Config(object, metaclass=Singleton):
     epoch_p = 30
     epoch_f = 60
     dot_scale = 1  # scaled dot product
+    lr_pre = 0.1
+    lr_fine = 1
 
     def __new__(cls):
         __instance = super().__new__(cls)
@@ -93,9 +96,11 @@ class Config(object, metaclass=Singleton):
         assert not hasattr(self.__class__, "__imported_yaml_path")
         with open(yaml_path, "r") as f:
             yaml_string = f.read()
-        self.import_dict(yaml.load(yaml_string, Loader=yaml.FullLoader), strict=strict)
+        self.import_dict(
+            yaml.load(yaml_string, Loader=yaml.FullLoader), strict=strict)
         self.__class__.__imported_yaml_path = yaml_path
-        self.__class__.__filecontents[os.path.basename(yaml_path)] = yaml_string
+        self.__class__.__filecontents[os.path.basename(
+            yaml_path)] = yaml_string
 
     def override(self, key, value):
         self.__class__.__immutable = False

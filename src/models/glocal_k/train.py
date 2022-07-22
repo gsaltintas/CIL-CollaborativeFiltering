@@ -24,7 +24,7 @@ def train_glocal_k():
     model_dir = model_dir.as_posix()
     print(f'Starting model training with following configuration: {model_pre}')
     config.override('experiment_dir', model_dir)
-
+    
     cil_dataloader = CILDataLoader(DATA_PATH, config.NUM_WORKERS)
     n_m, n_u, train_r, train_m, test_r, test_m = next(iter(cil_dataloader))
 
@@ -56,7 +56,7 @@ def train_glocal_k():
         n_u,
         lr=config.lr_pre,
     )
-    glocal_k_pre.double()
+    # glocal_k_pre.double()
     pretraining_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="pretraining-{epoch}-{pre_train_rmse:.4f}-{pre_test_rmse:.4f}",
@@ -65,8 +65,11 @@ def train_glocal_k():
         mode="min",
         save_last=True,
     )
+    lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
+
+    
     pretraining_trainer = pl.Trainer(
-        callbacks=[pretraining_checkpoint],
+        callbacks=[pretraining_checkpoint, lr_monitor],
         max_epochs=config.epoch_p,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
@@ -85,7 +88,7 @@ def train_glocal_k():
         pretraining_checkpoint.last_model_path,
         lr=config.lr_fine,
     )
-    glocal_k_fine.double()
+    # glocal_k_fine.double()
     finetuning_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="finetuning-{epoch}-{fine_train_rmse:.4f}-{fine_test_rmse:.4f}",
@@ -95,7 +98,7 @@ def train_glocal_k():
         save_last=True,
     )
     finetuning_trainer = pl.Trainer(
-        callbacks=[finetuning_checkpoint],
+        callbacks=[finetuning_checkpoint, lr_monitor],
         max_epochs=config.epoch_f,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
@@ -105,7 +108,8 @@ def train_glocal_k():
 
     )
     finetuning_trainer.fit(glocal_k_fine, cil_dataloader, cil_dataloader)
-
+    # glocal_k_fine = GLocalKFine.load_from_checkpoint(finetuning_checkpoint.best_model_path)
+    glocal_k_fine.eval()
     pred = glocal_k_fine(train_r)
     submit(DATA_PATH, pred.detach().numpy(), Path(
         config.experiment_dir, 'results').as_posix())

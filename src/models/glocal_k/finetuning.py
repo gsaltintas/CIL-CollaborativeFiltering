@@ -1,3 +1,6 @@
+from typing import Optional
+
+import optuna
 import pytorch_lightning as pl
 import torch
 
@@ -14,6 +17,8 @@ class GLocalKFine(pl.LightningModule):
         n_m,
         local_kernel_checkpoint,
         lr: float = 0.1,
+        trial: Optional[optuna.trial.Trial] = None,
+        *args, 
         **kwargs
     ):
         super().__init__()
@@ -27,6 +32,7 @@ class GLocalKFine(pl.LightningModule):
 
         self.global_kernel = GlobalKernel(n_m, gk_size, dot_scale)
         self.lr = lr
+        self.trial = trial
 
     def forward(self, x):
         y_dash, _ = self.local_kernel(x)
@@ -73,6 +79,18 @@ class GLocalKFine(pl.LightningModule):
         self.log('fine_train_rmse', train_rmse)
         self.log('fine_test_rmse', test_rmse)
         self.log('test_rmse', test_rmse)
+        if self.trial is not None:
+            self.trial.report(test_rmse.item(), step=self.global_step)
 
     def configure_optimizers(self):
-        return torch.optim.LBFGS(self.parameters(), max_iter=self.iter_f, history_size=10, lr=self.lr)
+        optimizer = torch.optim.LBFGS(
+            self.parameters(), max_iter=self.iter_f, history_size=10, lr=self.lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, patience=4, factor=0.5, min_lr=1e-1)
+
+        return {'optimizer': optimizer,
+                'lr_scheduler': {
+                    'scheduler': scheduler,
+                    'monitor': 'test_rmse'
+                }
+                }

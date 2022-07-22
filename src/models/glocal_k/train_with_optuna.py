@@ -19,26 +19,25 @@ from .submit import submit
 config = Config()
 
 
-def objective(trial: optuna.trial.Trial) -> float:
+def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float:
     print('objective')
-    cil_dataloader = CILDataLoader(DATA_PATH, config.NUM_WORKERS)
     n_m, n_u, train_r, train_m, test_r, test_m = next(iter(cil_dataloader))
 
     # set up params from optuna
-    n_hid = trial.suggest_categorical(
-        'n_hid', [300, 350, 400, 450, 500, 550, 600])
-    n_dim = trial.suggest_int('n_dim', 3, 7)
+    # 'n_hid', [300, 350, 400, 450, 500, 550, 600])
+    n_hid = trial.suggest_categorical('n_hid', [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500])
+    n_dim = config.n_dim # trial.suggest_int('n_dim', 3, 7)
     n_layers = trial.suggest_int('n_layers', 2, 5)
-    lambda_2 = trial.suggest_int('lambda_2', 10, 80)
-    lambda_s = trial.suggest_float('lambda_s', 1e-3, 3e-2)
-    iter_p = trial.suggest_categorical('iter_p', [5*i for i in range(1, 11)])
-    iter_f = trial.suggest_categorical('iter_f', [5*i for i in range(1, 11)])
-    gk_size = trial.suggest_categorical('gk_size', [3, 5, 7, 11])
+    lambda_2 = config.lambda_2 # trial.suggest_int('lambda_2', 10, 80)
+    lambda_s = config.lambda_s # trial.suggest_float('lambda_s', 1e-3, 3e-2)
+    iter_p = config.iter_p #trial.suggest_categorical('iter_p', [5*i for i in range(1, 11)])
+    iter_f = config.iter_f #trial.suggest_categorical('iter_f', [5*i for i in range(1, 11)])
+    gk_size = config.gk_size #trial.suggest_categorical('gk_size', [3, 5, 7, 11])
     # trial.suggest_categorical('epoch_p',[ 15, 20, 25, 30, 35, 40, 45])
     epoch_p = config.epoch_p
     # trial.suggest_categorical('epoch_f',[ 5*i for i in range(1,11)])
     epoch_f = config.epoch_f
-    dot_scale = trial.suggest_float('dot_scale', 9e-1, 1.2)
+    dot_scale = config.dot_scale # trial.suggest_float('dot_scale', 9e-1, 1.2)
     # trial.suggest_categorical('lr_pre', [1e-2, 1e-1, 1e0, 1e1, 1e2])
     lr_pre = config.lr_pre
     # trial.suggest_categorical('lr_fine', [1e-2, 1e-1, 1e0, 1e1, 1e2])
@@ -55,6 +54,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     config.override('experiment_dir', model_dir)
 
     if config.use_wandb:
+        wandb.join()
         wandb.init(
             project="cil-project",
             entity="gsaltintas",
@@ -80,7 +80,8 @@ def objective(trial: optuna.trial.Trial) -> float:
         lambda_s,
         iter_p,
         n_u,
-        lr=lr_pre
+        lr=lr_pre,
+        trial=trial,
     )
     pretraining_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
@@ -90,7 +91,8 @@ def objective(trial: optuna.trial.Trial) -> float:
         mode="min",
         save_last=True,
     )
-    callbacks_pre = [pretraining_checkpoint]
+    lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
+    callbacks_pre=[pretraining_checkpoint, lr_monitor]
     if config.enable_pruning:
         pre_pruning_callback = PyTorchLightningPruningCallback(
             trial, "pre_test_rmse")
@@ -114,6 +116,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         n_m,
         pretraining_checkpoint.last_model_path,
         lr=lr_fine,
+        trial=trial,
     )
     finetuning_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
@@ -123,7 +126,8 @@ def objective(trial: optuna.trial.Trial) -> float:
         mode="min",
         save_last=True,
     )
-    callbacks_fine = [finetuning_checkpoint]
+    # fine_lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
+    callbacks_fine=[finetuning_checkpoint, lr_monitor]
     if config.enable_pruning:
         fine_pruning_callback = PyTorchLightningPruningCallback(
             trial, "fine_test_rmse")
@@ -139,6 +143,8 @@ def objective(trial: optuna.trial.Trial) -> float:
     )
     finetuning_trainer.fit(glocal_k_fine, cil_dataloader, cil_dataloader)
 
+    # glocal_k_fine = GLocalKFine.load_from_checkpoint(finetuning_checkpoint.best_model_path)
+    glocal_k_fine.eval()
     pred = glocal_k_fine(train_r)
     submit(DATA_PATH, pred.detach().numpy(), Path(
         config.experiment_dir, 'results').as_posix(), model_pre)
@@ -146,7 +152,15 @@ def objective(trial: optuna.trial.Trial) -> float:
         # wandb.finish()
         wandb.join()
     return finetuning_trainer.callback_metrics['test_rmse'].item()
+    
 
+class Objective(object):
+    def __init__(self, cil_dataloader:CILDataLoader):
+        # Hold this implementation specific arguments as the fields of the class.
+        self.cil_dataloader = cil_dataloader
+
+    def __call__(self, trial):
+        return objective(trial, self.cil_dataloader)
 
 def run_optuna_glocal_k():
 
@@ -160,15 +174,18 @@ def run_optuna_glocal_k():
         url=f"sqlite:///{DB_PATH}",
         engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
     )
+    if config.study_name == "":
+        config.override('study_name', f'{config.algo}-min-1')
     study = optuna.create_study(
         direction="minimize",
-        study_name=f"cil-project/{config.algo}-min",
+        study_name=f"cil-project/{config.study_name}",
         storage=storage,
         load_if_exists=True,
         pruner=pruner,
     )
+    cil_dataloader = CILDataLoader(DATA_PATH, config.NUM_WORKERS)
     study.optimize(
-        objective,
+        Objective(cil_dataloader),
         n_trials=config.n_trials,
         timeout=config.timeout,
         n_jobs=config.n_jobs,

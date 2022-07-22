@@ -1,8 +1,11 @@
 # Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering
 <center>
-<h2>ETH Zürich Computational Intelligence Lab - Semester Project </h2><br>
+<h2>ETH Zürich Computational Intelligence Lab </h2>
 <h3><em>Team Meowtrix Purrdiction </em> &#128049; </h3>
 </center>
+
+## Paper &#128394;
+This is the implementation accompanying *Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering*. The Overleaf link for our paper can be found [here](https://www.overleaf.com/project/62431cee5ebeafd813c104c3).
 
 
 ## Installation &#128295;
@@ -28,9 +31,6 @@ The setup script will create a database file in the main directory by default, w
 - We offer [Wandb](https://docs.wandb.ai/) logging for experiment tracking. If not used, GLocal-K experiments are logged to local Tensorboard, and baselines experiments are logged as written output.
 - [Installation script](#installation) handles wandb login and setup when `-w` flag is passed. If you haven't exported your wandb credentials to your environment, you are advised to reply 'yes' to wandb login prompt. 
 - **Wandb during experiments**: By default, wandb logging is disabled. To enable, pass `--use-wandb=True` to the training command. Note that wandb logging is possible for BO on baselines, GLocal-K training and BO on GLocal-K.
-
-## Report &#128394;
-Overleaf link for the report can be found [here](https://www.overleaf.com/project/62431cee5ebeafd813c104c3).
 
 ## Bayesian Optimization using Optuna Hyperparameter Search Framework &#128201;
 - We use [Optuna](https://optuna.org/) as our Bayesian Hyperparameter Search Framework. 
@@ -101,15 +101,15 @@ Following baselines are taken from the [Surprise library](surprise.readthedocs.i
 
 ### Table summarizing hyper-parameter space for baselines
 
-$\ast$: default value used, +: Grid search values, $ : BO search range
+\*: default value used, +: Grid search values, $ : BO search range
 
 Model | n\_factors | biased | lr | regularizer | n\_epochs | $\mu_0$ | $\sigma_0$ |
 | -- | -- | -- | --| -- | -- | -- | --|
-SVD + |  50, 100, 200 | True, False | 0.005, 0.05 | 0.02, 0.1 | 20 $^\ast$ | 0 $^\ast$ | 0.1 $^\ast$ 
-| SVD $ | [50, 200] | True, False | [1e-5, 0.1] | [0.001, 0.1] | 20 $^\ast$ | [0, 3] | [0.1, 1]  
-SVD++ + | 150, 200 |x| 0.005, 0.001 | 0.1, 0.2 | 30, 60 | 0 $^\ast$ | 0.1 $^\ast$  
+SVD + |  50, 100, 200 | True, False | 0.005, 0.05 | 0.02, 0.1 | 20 \* | 0 \* | 0.1 \* 
+| SVD $ | [50, 200] | True, False | [1e-5, 0.1] | [0.001, 0.1] | 20 \* | [0, 3] | [0.1, 1]  
+SVD++ + | 150, 200 |x| 0.005, 0.001 | 0.1, 0.2 | 30, 60 | 0 \* | 0.1 \*  
 | SVD++ $ | [40, 200] | x | [1e-5, 0.1] | [0.001, 0.1] | [40, 70] | [0, 3] | [0.1, 1]
-|NMF + |    15, 20 | True, False | 0.005 $^\ast$ | $p_u$: 0.06, 0.01, $q_i$: 0.06, 0.01 | 50 $^\ast$ | x | x 
+|NMF + |    15, 20 | True, False | 0.005 \* | $p_u$: 0.06, 0.01, $q_i$: 0.06, 0.01 | 50 \* | x | x 
 
 | Model | k | sim | shrinkage | bsl|
 | -| -| -| -| -|

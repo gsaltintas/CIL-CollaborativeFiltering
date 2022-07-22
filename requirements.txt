@@ -10,5 +10,5 @@ scikit-surprise==1.1.1
 scikit-learn
 tensorboardX
 wandb==0.12.18
-matplotlib
 transformers
+matplotlib

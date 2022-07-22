@@ -22,6 +22,8 @@
 - Pass `-w` flag to setup wandb.
 The setup script will create a database file in the main directory by default, which Optuna uses.
 
+<span style="background-color:#ff9999; color:black"> <b>Macbook users</b></span>: Please be aware that matplotlib installation may be problematic for M1 Chip, you may comment it out in requirements.txt.
+
 ## Wandb &#128239;&#128214;
 - We offer [Wandb](https://docs.wandb.ai/) logging for experiment tracking. If not used, GLocal-K experiments are logged to local Tensorboard, and baselines experiments are logged as written output.
 - [Installation script](#installation) handles wandb login and setup when `-w` flag is passed. If you haven't exported your wandb credentials to your environment, you are advised to reply 'yes' to wandb login prompt. 
@@ -43,7 +45,7 @@ Overleaf link for the report can be found [here](https://www.overleaf.com/projec
 We provide a single entry point for coherence and ease of use `src/train.py`. This script accepts command line arguments (please see `src/utils/config.py` for the complete list of parameters or examine corresponding sections for relevant arguments).
 
 - **Euler**:
-    - Modify `train.sh` accordingly and run `bsub < scripts/train.sh` on Euler to submit a SLURM job.
+    - Modify `train.sh` accordingly and run `bsub < scripts/train.sh` on Euler to submit an LSF job.
 - **Local Machine**:
     - Sample training commands for each implemented algorithm can be found in their corresponding section.
 
@@ -65,7 +67,7 @@ Following baselines are taken from the [Surprise library](surprise.readthedocs.i
     ```
     - KNN baseline
     ```bash
-    python -m train  --experiment-type=train --use-wandb=False --algo=knn --k=40, --sim-options-name=pearson_baseline --sim-options-shrinkage=1, --bsl-options-name=als
+    python -m train  --experiment-type=train --use-wandb=False --algo=knn --k=40     --sim-options-name=pearson_baseline --sim-options-shrinkage=1   --bsl-options-name=als
     ```
     - Co-clustering
     ```bash
@@ -76,7 +78,7 @@ Following baselines are taken from the [Surprise library](surprise.readthedocs.i
     python -m train  --experiment-type=train --use-wandb=False --algo=s1 
     ```
 
-    | Algo | Public Leaderboard Score | Optimization Method |
+    | Algorithm | Public Leaderboard Score | Optimization Method |
     | ---  |  ---------------------   | ----- |
     | SVD  | 0.99760                    | BO |
     | SVD++| 0.98955                  | GridSearch |
@@ -99,21 +101,21 @@ Following baselines are taken from the [Surprise library](surprise.readthedocs.i
 
 ### Table summarizing hyper-parameter space for baselines
 
-$\ast$: default value used, $\triangle$: Grid search values, $\circ$: BO search range
+$\ast$: default value used, +: Grid search values, $ : BO search range
 
 Model | n\_factors | biased | lr | regularizer | n\_epochs | $\mu_0$ | $\sigma_0$ |
 | -- | -- | -- | --| -- | -- | -- | --|
-SVD $^\triangle$ |  50, 100, 200 | True, False | 0.005, 0.05 | 0.02, 0.1 | 20 $^\ast$ | 0 $^\ast$ | 0.1 $^\ast$ 
-| SVD $^\circ$ | [50, 200] | True, False | [1e-5, 0.1] | [0.001, 0.1] | 20 $^\ast$ | [0, 3] | [0.1, 1]  
-SVD++ $^\triangle$ | 150, 200 |x| 0.005, 0.001 | 0.1, 0.2 | 30, 60 | 0 $^\ast$ | 0.1 $^\ast$  
-| SVD++ $^\circ$ | [40, 200] | x | [1e-5, 0.1] | [0.001, 0.1] | [40, 70] | [0, 3] | [0.1, 1]
-|NMF $^\triangle$ |    15, 20 | True, False | 0.005 $^\ast$ | $p_u$: 0.06, 0.01, $q_i$: 0.06, 0.01 | 50 $^\ast$ | x | x 
+SVD + |  50, 100, 200 | True, False | 0.005, 0.05 | 0.02, 0.1 | 20 $^\ast$ | 0 $^\ast$ | 0.1 $^\ast$ 
+| SVD $ | [50, 200] | True, False | [1e-5, 0.1] | [0.001, 0.1] | 20 $^\ast$ | [0, 3] | [0.1, 1]  
+SVD++ + | 150, 200 |x| 0.005, 0.001 | 0.1, 0.2 | 30, 60 | 0 $^\ast$ | 0.1 $^\ast$  
+| SVD++ $ | [40, 200] | x | [1e-5, 0.1] | [0.001, 0.1] | [40, 70] | [0, 3] | [0.1, 1]
+|NMF + |    15, 20 | True, False | 0.005 $^\ast$ | $p_u$: 0.06, 0.01, $q_i$: 0.06, 0.01 | 50 $^\ast$ | x | x 
 
 | Model | k | sim | shrinkage | bsl|
 | -| -| -| -| -|
-| KNN $^\triangle$ | (10, 25, 40) |pearson_baseline|(0,1)| (als, sgd) |
-<!-- 
+| KNN + | (10, 25, 40) |pearson_baseline|(0,1)| (als, sgd) |
 
+<!-- 
 SVD: n_factors:(50, 100, 200), biased: (True, False), lr_all:(0.005, 0.05), reg_all:(0.02, 0.1)
 SVD++ 
     n_factors:(150, 200), n_epochs:(30, 60), lr_all:(0.005, 0.001), reg_all:(0.1, 0.2)

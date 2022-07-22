@@ -145,8 +145,8 @@ def run_baseline_training():
     svd_df["users"] = sub_users
     svd_df["movies"] = sub_movies
     svd_df["preds"] = sub_preds
-    svd_df.to_csv(f"./results/{algo}preds.csv", index=False)
-    print(f"Saved predictions for {algo}")
+    svd_df.to_csv(f"./results/{config.algo}preds.csv", index=False)
+    print(f"Saved predictions for {config.algo}")
 
 
 if __name__ == "__main__":

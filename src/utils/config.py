@@ -24,7 +24,7 @@ class Config(object, metaclass=Singleton):
     project = "cil-project"
     entity = "gsaltintas"
     experiment_dir = "."  # "/cluster/home/galtintas/scratch/"
-    experiment_type = "optuna"  # "optuna", "train", "gridsearch"
+    experiment_type = "train"  # "optuna", "train", "gridsearch"
     algo = "svd"  # options: "svd", "svdpp", "glocal_k"
     use_wandb = False
     seed = 1234 #42
@@ -52,7 +52,7 @@ class Config(object, metaclass=Singleton):
     biased = True
     lr_all = 0.014
     reg_all = 0.09
-    init_mean = 0
+    init_mean = 0.0
     init_std_dev = 0.1
     n_epochs = 100
     # co-cluster:
@@ -79,7 +79,7 @@ class Config(object, metaclass=Singleton):
     iter_f = 5
     epoch_p = 30
     epoch_f = 60
-    dot_scale = 1  # scaled dot product
+    dot_scale = 1.0  # scaled dot product
     lr_pre = 0.1
     lr_fine = 1.0
 

@@ -1,8 +1,11 @@
 # Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering
 <center>
-<h2>ETH Zürich Computational Intelligence Lab - Semester Project </h2><br>
+<h2>ETH Zürich Computational Intelligence Lab </h2><br>
 <h3><em>Team Meowtrix Purrdiction </em> &#128049; </h3>
 </center>
+
+## Paper &#128394;
+This is the implementation accompanying *Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering*. The Overleaf link for our paper can be found [here](https://www.overleaf.com/project/62431cee5ebeafd813c104c3).
 
 
 ## Installation &#128295;
@@ -26,9 +29,6 @@ The setup script will create a database file in the main directory by default, w
 - We offer [Wandb](https://docs.wandb.ai/) logging for experiment tracking. If not used, GLocal-K experiments are logged to local Tensorboard, and baselines experiments are logged as written output.
 - [Installation script](#installation) handles wandb login and setup when `-w` flag is passed. If you haven't exported your wandb credentials to your environment, you are advised to reply 'yes' to wandb login prompt. 
 - **Wandb during experiments**: By default, wandb logging is disabled. To enable, pass `--use-wandb=True` to the training command. Note that wandb logging is possible for BO on baselines, GLocal-K training and BO on GLocal-K.
-
-## Report &#128394;
-Overleaf link for the report can be found [here](https://www.overleaf.com/project/62431cee5ebeafd813c104c3).
 
 ## Bayesian Optimization using Optuna Hyperparameter Search Framework &#128201;
 - We use [Optuna](https://optuna.org/) as our Bayesian Hyperparameter Search Framework. 

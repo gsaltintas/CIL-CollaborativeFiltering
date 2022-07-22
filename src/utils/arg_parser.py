@@ -2,6 +2,10 @@ import argparse
 import logging
 from pathlib import Path
 
+import numpy as np
+import torch
+from pytorch_lightning.utilities.seed import seed_everything
+
 from .config import Config
 
 config = Config()
@@ -22,7 +26,9 @@ def _convert_cli_arg_type(key, value):
 
 
 def script_init_common():
-    parser = argparse.ArgumentParser(description="CIL Project - meowtrix-purrdiction Group.")
+    parser = argparse.ArgumentParser(
+        description="CIL Project - meowtrix-purrdiction Group."
+    )
     parser.add_argument(
         "-v",
         type=str,
@@ -80,4 +86,12 @@ def script_init_common():
             if value is not None and hasattr(config, key)
         }
     )
+    set_seed(config.seed)
     return config
+
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    seed_everything(seed=config.seed, workers=True)

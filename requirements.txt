@@ -10,3 +10,5 @@ scikit-learn
 tensorboardX
 torch
 wandb==0.12.18
+matplotlib
+transformers

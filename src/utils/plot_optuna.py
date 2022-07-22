@@ -10,8 +10,6 @@ from optuna.visualization.matplotlib import (
     plot_param_importances,
 )
 
-from models.baselines import SVD_, SVDpp_
-
 from . import DB_PATH
 from .arg_parser import script_init_common
 
@@ -26,10 +24,12 @@ storage = optuna.storages.RDBStorage(
         url=f"sqlite:///{DB_PATH}",
         engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
     )
+if config.study_name == "":
+        config.override('study_name', f'{config.algo}-min')
 logger.info("Trying with optuna storage")
 study = optuna.create_study(
     direction="minimize",
-    study_name=f"cil-project/{config.algo}-min-1" if config.algo=='svdpp' else f"cil-project/{config.algo}-min"  ,
+    study_name=f"cil-project/{config.study_name}",
     storage=storage,
     load_if_exists=True,
 )

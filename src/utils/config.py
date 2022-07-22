@@ -6,6 +6,7 @@ from time import time
 from typing import Union
 
 import yaml
+from optuna import Study
 
 
 class Singleton(type):
@@ -26,7 +27,7 @@ class Config(object, metaclass=Singleton):
     experiment_type = "optuna"  # "optuna", "train", "gridsearch"
     algo = "svd"  # options: "svd", "svdpp", "glocal_k"
     use_wandb = False
-    seed = 42
+    seed = 1234 #42
     train_size = 0.8  # train-val split ratio
 
     # optuna
@@ -40,6 +41,7 @@ class Config(object, metaclass=Singleton):
     scoring = "rmse"
     n_startup_trials = 5
     n_warump_steps = 20
+    study_name = ""
     
     # grid search
     refit = True
@@ -58,10 +60,6 @@ class Config(object, metaclass=Singleton):
     # nmf
     reg_pu = 0.06
     reg_qi = 0.02
-    # rl config
-    learning_rate = 3e-4
-    batch_size = 64
-    seed = 0
     # knn
     k = 25
     sim_options_name = "pearson_baseline"
@@ -82,7 +80,7 @@ class Config(object, metaclass=Singleton):
     epoch_f = 60
     dot_scale = 1  # scaled dot product
     lr_pre = 0.1
-    lr_fine = 1
+    lr_fine = 1.0
 
     def __new__(cls):
         __instance = super().__new__(cls)

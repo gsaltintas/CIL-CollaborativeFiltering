@@ -144,12 +144,12 @@ def run_optuna_baselines():
         url=f"sqlite:///{DB_PATH}",
         engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
     )
+    if config.study_name == "":
+        config.override('study_name', f'{config.algo}-min')
     logger.info("Trying with optuna storage")
     study = optuna.create_study(
         direction="minimize",
-        study_name=f"cil-project/{config.algo}-min"
-        if config.algo == "svd"
-        else f"cil-project/{config.algo}-min-2",
+        study_name=f"cil-project/{config.study_name}"
         storage=storage,
         load_if_exists=True,
     )
@@ -172,7 +172,7 @@ def run_optuna_baselines():
         callbacks=callbacks,
         n_jobs=config.n_jobs,
     )
-    # doesnt reach here within the limits of euler
+    # doesnt usually reach here within the limits of euler
     trials = study.trials
     df = study.trials_dataframe()
     if config.use_wandb:

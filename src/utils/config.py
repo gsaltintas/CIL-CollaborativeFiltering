@@ -42,6 +42,7 @@ class Config(object, metaclass=Singleton):
     n_startup_trials = 5
     n_warump_steps = 20
     study_name = ""
+    use_storage = False  # storage for optuna
     
     # grid search
     refit = True

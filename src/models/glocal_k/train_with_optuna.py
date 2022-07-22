@@ -169,11 +169,12 @@ def run_optuna_glocal_k():
                                     n_warmup_steps=config.n_warump_steps,
                                     ) if config.enable_pruning else optuna.pruners.NopPruner()
     )
-
-    storage = optuna.storages.RDBStorage(
-        url=f"sqlite:///{DB_PATH}",
-        engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
-    )
+    storage = None
+    if config.use_storage:
+        storage = optuna.storages.RDBStorage(
+            url=f"sqlite:///{DB_PATH}",
+            engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
+        )
     if config.study_name == "":
         config.override('study_name', f'{config.algo}-min-1')
     study = optuna.create_study(

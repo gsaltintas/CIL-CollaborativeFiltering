@@ -140,16 +140,19 @@ def run_optuna_baselines():
     Run the optuna search for the baselines svd and svdpp
     saves a submission file for each trial
     """
-    storage = optuna.storages.RDBStorage(
-        url=f"sqlite:///{DB_PATH}",
-        engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
-    )
+
+    storage = None
+    if config.use_storage:
+        storage = optuna.storages.RDBStorage(
+            url=f"sqlite:///{DB_PATH}",
+            engine_kwargs={"connect_args": {"timeout": 10}},  # "pool_size": 20,
+        )
+        logger.info("Trying with optuna storage")
     if config.study_name == "":
         config.override('study_name', f'{config.algo}-min')
-    logger.info("Trying with optuna storage")
     study = optuna.create_study(
         direction="minimize",
-        study_name=f"cil-project/{config.study_name}"
+        study_name=f"cil-project/{config.study_name}",
         storage=storage,
         load_if_exists=True,
     )

@@ -21,4 +21,9 @@ reconnect_info
 build/*
 dist/*
 *.egg-info/
+*/bin/*
+*/lib/*
+
 src/false/*
+lightning_logs/*
+meowtrix-purrdiction/*

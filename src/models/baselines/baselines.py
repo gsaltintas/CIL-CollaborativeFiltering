@@ -237,7 +237,7 @@ def run_grid_search():
         run_svd(data, sub_data, sub_users, sub_movies)
     elif config.algo == "svdpp":
         run_svdpp(data, sub_data, sub_users, sub_movies)
-    elif config.algo == "cluster":
+    elif config.algo == "clustering":
         run_cocluster(data, sub_data, sub_users, sub_movies)
     elif config.algo == "nmf":
         run_nmf(data, sub_data, sub_users, sub_movies)

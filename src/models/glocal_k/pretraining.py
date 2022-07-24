@@ -19,6 +19,7 @@ class GLocalKPre(pl.LightningModule):
         n_u,
         lr: float = 0.1,
         trial: Optional[optuna.trial.Trial] = None,
+        optim: Optional[str] = 'lbfgs',
         **kwargs
     ):
         super().__init__()
@@ -30,6 +31,7 @@ class GLocalKPre(pl.LightningModule):
             n_layers, n_u, n_hid, n_dim, torch.sigmoid, lambda_s, lambda_2)
         self.lr = lr
         self.trial = trial
+        self.optim = optim
 
     def forward(self, x):
         return self.local_kernel(x)
@@ -71,10 +73,17 @@ class GLocalKPre(pl.LightningModule):
     #     return torch.optim.LBFGS(self.local_kernel.parameters(), max_iter=self.iter_p, history_size=10, lr=self.lr)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.LBFGS(
+        if self.optim == 'adam':
+            optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
+        elif self.optim == 'lbfgs':
+            optimizer = torch.optim.LBFGS(
             self.parameters(), max_iter=self.iter_p, history_size=10, lr=self.lr)
+        else:
+            raise ValueError('Only adam and lbfgs options are possible for optimizer.')
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, patience=4, factor=0.5, min_lr=1e-1)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer,
+                                                                     gamma=0.995)
 
         return {'optimizer': optimizer,
                 'lr_scheduler': {

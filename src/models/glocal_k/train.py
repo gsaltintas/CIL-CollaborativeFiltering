@@ -55,13 +55,14 @@ def train_glocal_k():
         config.iter_p,
         n_u,
         lr=config.lr_pre,
+        optim=config.optimizer,
     )
     # glocal_k_pre.double()
     pretraining_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="pretraining-{epoch}-{pre_train_rmse:.4f}-{pre_test_rmse:.4f}",
         monitor="pre_test_rmse",
-        save_top_k=1,
+        save_top_k=2,
         mode="min",
         save_last=True,
     )
@@ -85,15 +86,16 @@ def train_glocal_k():
         config.iter_f,
         config.dot_scale,
         n_m,
-        pretraining_checkpoint.last_model_path,
+        pretraining_checkpoint.best_model_path,
         lr=config.lr_fine,
+        optim=config.optimizer,
     )
     # glocal_k_fine.double()
     finetuning_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="finetuning-{epoch}-{fine_train_rmse:.4f}-{fine_test_rmse:.4f}",
         monitor="fine_test_rmse",
-        save_top_k=1,
+        save_top_k=2,
         mode="min",
         save_last=True,
     )

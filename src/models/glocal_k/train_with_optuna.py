@@ -28,8 +28,8 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
     n_hid = trial.suggest_categorical('n_hid', [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500])
     n_dim = config.n_dim # trial.suggest_int('n_dim', 3, 7)
     n_layers = trial.suggest_int('n_layers', 2, 5)
-    lambda_2 = config.lambda_2 # trial.suggest_int('lambda_2', 10, 80)
-    lambda_s = config.lambda_s # trial.suggest_float('lambda_s', 1e-3, 3e-2)
+    lambda_2 = trial.suggest_int('lambda_2', 10, 80)
+    lambda_s = trial.suggest_float('lambda_s', 1e-3, 3e-2)
     iter_p = config.iter_p #trial.suggest_categorical('iter_p', [5*i for i in range(1, 11)])
     iter_f = config.iter_f #trial.suggest_categorical('iter_f', [5*i for i in range(1, 11)])
     gk_size = config.gk_size #trial.suggest_categorical('gk_size', [3, 5, 7, 11])
@@ -37,7 +37,7 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
     epoch_p = config.epoch_p
     # trial.suggest_categorical('epoch_f',[ 5*i for i in range(1,11)])
     epoch_f = config.epoch_f
-    dot_scale = config.dot_scale # trial.suggest_float('dot_scale', 9e-1, 1.2)
+    dot_scale = trial.suggest_float('dot_scale', 9e-1, 1.2)
     # trial.suggest_categorical('lr_pre', [1e-2, 1e-1, 1e0, 1e1, 1e2])
     lr_pre = config.lr_pre
     # trial.suggest_categorical('lr_fine', [1e-2, 1e-1, 1e0, 1e1, 1e2])
@@ -82,12 +82,13 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
         n_u,
         lr=lr_pre,
         trial=trial,
+        optim=config.optimizer,
     )
     pretraining_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="pretraining-{epoch}-{pre_train_rmse:.4f}-{pre_test_rmse:.4f}",
         monitor="pre_test_rmse",
-        save_top_k=1,
+        save_top_k=2,
         mode="min",
         save_last=True,
     )
@@ -114,15 +115,16 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
         iter_f,
         dot_scale,
         n_m,
-        pretraining_checkpoint.last_model_path,
+        pretraining_checkpoint.best_model_path,
         lr=lr_fine,
         trial=trial,
+        optim=config.optimizer,
     )
     finetuning_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="finetuning-{epoch}-{fine_train_rmse:.4f}-{fine_test_rmse:.4f}",
         monitor="fine_test_rmse",
-        save_top_k=1,
+        save_top_k=2,
         mode="min",
         save_last=True,
     )
@@ -143,7 +145,7 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
     )
     finetuning_trainer.fit(glocal_k_fine, cil_dataloader, cil_dataloader)
 
-    # glocal_k_fine = GLocalKFine.load_from_checkpoint(finetuning_checkpoint.best_model_path)
+    glocal_k_fine = GLocalKFine.load_from_checkpoint(finetuning_checkpoint.best_model_path)
     glocal_k_fine.eval()
     pred = glocal_k_fine(train_r)
     submit(DATA_PATH, pred.detach().numpy(), Path(
@@ -151,6 +153,7 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
     if config.use_wandb:
         # wandb.finish()
         wandb.join()
+    config.override('experiment_dir', Path(config.experiment_dir).parents[1])
     return finetuning_trainer.callback_metrics['test_rmse'].item()
     
 

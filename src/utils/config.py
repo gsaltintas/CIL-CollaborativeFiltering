@@ -82,6 +82,7 @@ class Config(object, metaclass=Singleton):
     dot_scale = 1.0  # scaled dot product
     lr_pre = 0.1
     lr_fine = 1.0
+    optimizer = 'lbfgs'     # lbfgs, adam
 
     def __new__(cls):
         __instance = super().__new__(cls)

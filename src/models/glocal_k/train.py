@@ -57,7 +57,6 @@ def train_glocal_k():
         lr=config.lr_pre,
         optim=config.optimizer,
     )
-    # glocal_k_pre.double()
     pretraining_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="pretraining-{epoch}-{pre_train_rmse:.4f}-{pre_test_rmse:.4f}",
@@ -67,17 +66,12 @@ def train_glocal_k():
         save_last=True,
     )
     lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
-
-    
     pretraining_trainer = pl.Trainer(
         callbacks=[pretraining_checkpoint, lr_monitor],
         max_epochs=config.epoch_p,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
         logger=logger,
-        accelerator='gpu' if torch.cuda.is_available() else None,
-        gpus=1 if torch.cuda.is_available() else None,
-
     )
     pretraining_trainer.fit(glocal_k_pre, cil_dataloader, cil_dataloader)
 
@@ -90,7 +84,6 @@ def train_glocal_k():
         lr=config.lr_fine,
         optim=config.optimizer,
     )
-    # glocal_k_fine.double()
     finetuning_checkpoint = pl.callbacks.ModelCheckpoint(
         dirpath=f"{config.experiment_dir}/checkpoints",
         filename="finetuning-{epoch}-{fine_train_rmse:.4f}-{fine_test_rmse:.4f}",
@@ -105,9 +98,6 @@ def train_glocal_k():
         log_every_n_steps=1,
         replace_sampler_ddp=False,
         logger=logger,
-        accelerator='gpu' if torch.cuda.is_available() else None,
-        gpus=1 if torch.cuda.is_available() else None,
-
     )
     finetuning_trainer.fit(glocal_k_fine, cil_dataloader, cil_dataloader)
     # glocal_k_fine = GLocalKFine.load_from_checkpoint(finetuning_checkpoint.best_model_path)

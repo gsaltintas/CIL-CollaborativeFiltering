@@ -67,7 +67,7 @@ def load_data_cil(path="./", frac=(1 - config.train_size), seed=config.seed):
 
 
 class CILDataset(torch.utils.data.Dataset):
-    def __init__(self, data_path, seed=1234):
+    def __init__(self, data_path):
         self.data = load_data_cil(data_path)
 
     def __len__(self):

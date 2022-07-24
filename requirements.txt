@@ -7,7 +7,7 @@ pytorch-lightning==1.6.4
 torch==1.12.0
 scikit-learn==1.1.1
 scikit-surprise==1.1.1
-scikit-learn
+tensorboard
 tensorboardX
 wandb==0.12.18
 transformers

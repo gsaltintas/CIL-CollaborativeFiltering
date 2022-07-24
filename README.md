@@ -37,7 +37,7 @@ The setup script will create a database file in the main directory by default, w
 - **Pruning**: We don't use any pruning algorithms for baselines but to enable median pruning for GLocal-K optuna implementation pass `--enable-pruning=True` to the training script.
 - **Storage**: We run our experiments with Optuna storage to be able to run sequential and parallel trials. However, for third-party users' convenience we disable storage option, pass `--use-storage=True` to training script to enable it. To use Optuna with storage you need to create a database file in the project folder. This is also handled by the setup script, if for some reason setup script fails, run `echo >> cil.db`. 
 - **Sampler**: We use the default TPESampler.
-- **Reproducibility**: Please note that we refrain from using a deterministic sampler for Optuna experiments as the documentation suggests (see [here](https://optuna.readthedocs.io/en/stable/faq.html#how-can-i-obtain-reproducible-optimization-results)).
+- **Reproducibility**: Please note that our Optuna experiments are not fully reproducible because we refrain from using a deterministic sampler for Optuna experiments as warned by the documentation (see [here](https://optuna.readthedocs.io/en/stable/faq.html#how-can-i-obtain-reproducible-optimization-results)).
 - BO is implemented for SVD, SVD++, and GLocal-K only.
 
 
@@ -103,17 +103,17 @@ Following baselines are taken from the [Surprise library](surprise.readthedocs.i
 
 \*: default value used, +: Grid search values, $ : BO search range
 
-Model | n\_factors | biased | lr | regularizer | n\_epochs | $\mu_0$ | $\sigma_0$ |
+Model | n\_factors | biased | lr | regularizer | n\_epochs | init_mean | init_std |
 | -- | -- | -- | --| -- | -- | -- | --|
 SVD + |  50, 100, 200 | True, False | 0.005, 0.05 | 0.02, 0.1 | 20 \* | 0 \* | 0.1 \* 
 | SVD $ | [50, 200] | True, False | [1e-5, 0.1] | [0.001, 0.1] | 20 \* | [0, 3] | [0.1, 1]  
 SVD++ + | 150, 200 |x| 0.005, 0.001 | 0.1, 0.2 | 30, 60 | 0 \* | 0.1 \*  
 | SVD++ $ | [40, 200] | x | [1e-5, 0.1] | [0.001, 0.1] | [40, 70] | [0, 3] | [0.1, 1]
-|NMF + |    15, 20 | True, False | 0.005 \* | $p_u$: 0.06, 0.01, $q_i$: 0.06, 0.01 | 50 \* | x | x 
+|NMF + |    15, 20 | True, False | 0.005 \* | 0.06, 0.01 | 50 \* | x | x 
 
-| Model | k | sim | shrinkage | bsl|
+| Model | k | simimlarity measure | shrinkage | baseline estimates |
 | -| -| -| -| -|
-| KNN + | (10, 25, 40) |pearson_baseline|(0,1)| (als, sgd) |
+| KNN + | 10, 25, 40 |pearson_baseline|0,1| ALS, SGD |
 
 <!-- 
 SVD: n_factors:(50, 100, 200), biased: (True, False), lr_all:(0.005, 0.05), reg_all:(0.02, 0.1)
@@ -127,18 +127,32 @@ KNN
 ## GLocal-K &#129351;
 We implemented GLocal-K^ in [Pytorch Lightning](https://www.pytorchlightning.ai/) and [Pytorch](https://pytorch.org/) with RBF Kernel drawing inspiration from the official [implementation](https://github.com/usydnlp/Glocal_K).
 
-Please note that depending on the hyperparameter choice, GLocal-K may have 6 to 15 million trainable parameters. We provide a training script under `scripts/train_glocal.sh`.
+Please note that depending on the hyperparameter choice, GLocal-K may have 6 to 15 million trainable parameters. We provide a training script under `scripts/train_glocal.sh`. Therefore when training on Euler or another system that may have memory restrictions, you are advised to set experiment directory via command line eg. `--experiment-dir=$SCRATCH/cil`.
 
 > ^ S. C. Han, T. Lim, S. Long, B. Burgstaller, and J. Poon, “GLocal-K: Global and Local Kernels for Recommender Systems,” in Proceedings of the 30th ACM International Conference on Information & Knowledge Management, Oct. 2021, pp. 3063–3067. doi: 10.1145/3459637.3482112.
 
 ### Optuna
-
+```bash
+python -m train --use-wandb True --experiment-dir experiments \
+     --experiment-type optuna --algo glocal_k \
+    --n-trials 20  --enable-pruning True \
+    --NUM-WORKERS 1 --iter-p=5 --iter-f=5 \
+    --lr-fine=0.1 --lr-pre=0.1 \
+    --lambda-2=20 \
+    --lambda-s=0.006 \
+    --epoch-p=30 \
+    --epoch-f=80 \
+    --dot-scale=1 \
+    --train-size=0.9 \
+    --optimizer lbfgs --train-size=0.9 \
+    --use-storage=False
+```
 ### Training
 ```bash
 python -m train --use-wandb False --experiment-dir experiments \
      --experiment-type train --algo glocal_k \
-    --NUM-WORKERS 1  --n-hid 1000  --n-dim 10  --n-layers 2  --gk-size 5 \
+    --NUM-WORKERS 1  --n-hid 1000  --n-dim 5  --n-layers 2  --gk-size 5 \
     --lambda-2 20  --lambda-s 0.006  --iter-p 5  --iter-f 5 \
-     --epoch-p 30 --epoch-f 60 --dot-scale 1 --seed 42 \
-    --lr-fine 1 --lr-pre 0.1
+     --epoch-p 30 --epoch-f 80 --dot-scale 1 --seed 1234 \
+    --lr-fine 0.1 --lr-pre 0.1 --optimizer lbfgs 
 ```

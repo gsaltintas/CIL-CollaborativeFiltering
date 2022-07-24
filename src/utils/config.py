@@ -69,20 +69,22 @@ class Config(object, metaclass=Singleton):
 
     # glocal config
     NUM_WORKERS = 8
-    n_hid = 500
+    n_hid = 1000
     n_dim = 5
     n_layers = 3
-    gk_size = 7
+    gk_size = 5
     lambda_2 = 20.  # l2 regularisation
     lambda_s = 0.006
     iter_p = 5  # optimisation
     iter_f = 5
     epoch_p = 30
-    epoch_f = 60
+    epoch_f = 80
     dot_scale = 1.0  # scaled dot product
     lr_pre = 0.1
     lr_fine = 1.0
     optimizer = 'lbfgs'     # lbfgs, adam
+    lr_scheduler = 'none'       # exponential, reducelronplateau, none
+    weight_decay = 0.
 
     def __new__(cls):
         __instance = super().__new__(cls)

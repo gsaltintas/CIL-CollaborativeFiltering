@@ -2,6 +2,7 @@
 <center>
 <h2>ETH Zürich Computational Intelligence Lab </h2>
 <h3><em>Team Meowtrix Purrdiction </em> &#128049; </h3>
+Members: Flavia Cavaliere, Gül Sena Altıntaş, Martynas Noruišis, William Andersson
 </center>
 
 ## Paper &#128394;
@@ -51,8 +52,8 @@ We provide a single entry point for coherence and ease of use `src/train.py`. Th
 
 
 ## Baselines &#129352;
-Following baselines are taken from the [Surprise library](surprise.readthedocs.io): SVD, SVD++, NMF, KNN baseline, Co-clustering and SlopeOne.
-- **Training**: Each baseline have its own set of parameters. We list the training commands for each algorithm with our best-performing submissions:
+Following baselines are taken from the [Surprise library](surprise.readthedocs.io): SVD, SVD++, NMF, KNNBaseline.
+- **Training**: Each baseline has its own set of parameters. We list the training commands for each algorithm with our best-performing submissions:
     - SVD 
     ```bash
     python -m train  --experiment-type=train --use-wandb=False --algo=svd --n-factors=66 --biased=True --lr-all=0.014034216851890047 --reg-all=0.0904990847308604 --init-mean=0.9995295507254714 --init-std-dev=0.3654283107617773 --seed=42
@@ -65,32 +66,26 @@ Following baselines are taken from the [Surprise library](surprise.readthedocs.i
     ```bash
     python -m train  --experiment-type=train --use-wandb=False --algo=nmf --n-factors=20 --biased=False --reg-pu=0.1 --reg-qi=0.1 --seed=42
     ```
-    - KNN baseline
+    - KNNBaseline
     ```bash
     python -m train  --experiment-type=train --use-wandb=False --algo=knn --k=40     --sim-options-name=pearson_baseline --sim-options-shrinkage=1   --bsl-options-name=als
     ```
-    - Co-clustering
-    ```bash
-    python -m train  --experiment-type=train --use-wandb=False --algo=coclustering  --n-cltr-u=4 --n-cltr-i=10 --n-epochs=10 --seed=config.seed
-    ```
-    - SlopeOne
-    ```bash
-    python -m train  --experiment-type=train --use-wandb=False --algo=s1 
-    ```
+
+
 
     | Algorithm | Public Leaderboard Score | Optimization Method |
     | ---  |  ---------------------   | ----- |
     | SVD  | 0.99760                    | BO |
     | SVD++| 0.98955                  | GridSearch |
     | NMF  | 1.00307                   | GridSearch |
-    | KNN Baseline | 1.00296            | GridSearch |
+    | KNNBaseline | 1.00296            | GridSearch |
 
 - **Hyperparameter Search**: This script can run GridSearchCV and Bayesian Optimization on the baselines. Please note that for simplicity and ease of use of the script, we don't support passing the hyperparameter search space from the command line. Hyperparameter search spaces for baselines are listed in the [below table](#table-summarizing-hyper-parameter-space-for-baselines). 
     - **Grid Search**: Grid search with 5-fold cross-validation is taken from the Surprise Library. Relevant arguments that can be passed to the training script are as follows:
     ```bash
     --refit [True, False] --algo [svd, svdpp, coclustering, nmf, knn] --n-jobs (int)
     ```
-    - **Bayesian Optimization with Optuna**: As outlined in [BO section](#bayesian-optimization-using-optuna-hyperparameter-search-framework), we use Optuna to further optimize the two best-performing baselines (SVD, SVD++). We wrote wrapper classes on the corresponding Suprise baselines for compatibility. Relevant arguments that can be passed to the training script are as follows:
+    - **Bayesian Optimization with Optuna**: As outlined in [BO section](#bayesian-optimization-using-optuna-hyperparameter-search-framework), we use Optuna to further optimize the two best-performing baselines (SVD, SVD++). We wrote wrapper classes on the corresponding Surprise baselines for compatibility. Relevant arguments that can be passed to the training script are as follows:
     ```bash
     --refit [True, False] --algo [svd, svdpp] 
     --use-wandb  [True, False] --use-storage [True, False] --study-name "" 
@@ -113,7 +108,7 @@ SVD++ + | 150, 200 |x| 0.005, 0.001 | 0.1, 0.2 | 30, 60 | 0 \* | 0.1 \*
 
 | Model | k | simimlarity measure | shrinkage | baseline estimates |
 | -| -| -| -| -|
-| KNN + | 10, 25, 40 |pearson_baseline|0,1| ALS, SGD |
+| KNNBaseline + | 10, 25, 40 |pearson_baseline|0,1| ALS, SGD |
 
 <!-- 
 SVD: n_factors:(50, 100, 200), biased: (True, False), lr_all:(0.005, 0.05), reg_all:(0.02, 0.1)

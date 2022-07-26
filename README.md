@@ -6,7 +6,7 @@ Members: Flavia Cavaliere, Gül Sena Altıntaş, Martynas Noruišis, William And
 </center>
 
 ## Paper &#128394;
-This is the implementation accompanying *Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering*. The Overleaf link for our paper can be found [here](https://www.overleaf.com/project/62431cee5ebeafd813c104c3).
+This is the implementation accompanying *Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering*.
 
 
 ## Installation &#128295;

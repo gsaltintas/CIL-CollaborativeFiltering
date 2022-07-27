@@ -17,23 +17,23 @@ config = Config()
 
 
 def train_glocal_k():
-    n_hid = config.n_hid  # 1000 #500
-    n_dim = config.n_dim  # 5
-    n_layers = config.n_layers  # 2 #3
-    gk_size = config.gk_size  # 5 #7
-    lambda_2 = config.lambda_2  # 20.  # l2 regularisation
-    lambda_s = config.lambda_s  # 0.006
-    iter_p = config.iter_p  # 5  # optimisation
-    iter_f = config.iter_f  # 5
-    epoch_p = config.epoch_p  # 30
-    epoch_f = config.epoch_f  # 80
-    dot_scale = config.dot_scale  # 1  # scaled dot product
-    seed = config.seed  # 1234
-    lr_pre = config.lr_pre  # 1e-1
-    lr_fine = config.lr_fine  # 1e-1
-    iter_p = config.iter_p  # 5
-    iter_f = config.iter_f  # 5
-    dot_scale = config.dot_scale  # 1
+    n_hid = config.n_hid  
+    n_dim = config.n_dim  
+    n_layers = config.n_layers  
+    gk_size = config.gk_size  
+    lambda_2 = config.lambda_2   # l2 regularisation
+    lambda_s = config.lambda_s 
+    iter_p = config.iter_p    # optimisation
+    iter_f = config.iter_f  
+    epoch_p = config.epoch_p  
+    epoch_f = config.epoch_f  
+    dot_scale = config.dot_scale   # scaled dot product
+    seed = config.seed  
+    lr_pre = config.lr_pre  
+    lr_fine = config.lr_fine  
+    iter_p = config.iter_p  
+    iter_f = config.iter_f  
+    dot_scale = config.dot_scale  
     # setup model directory
     model_pre = f"nhid-{n_hid}-ndim--{n_dim}-layers-{n_layers}-lambda2-{lambda_2}-lambdas-{lambda_s}-iterp-{iter_p}-iterf-{iter_f}-gk-{gk_size}-epochp-{epoch_p}-epochf-{epoch_f}-dots-{dot_scale}_"
     model_dir = Path(config.experiment_dir, f"{model_pre}/{time.time():.0f}")
@@ -43,8 +43,6 @@ def train_glocal_k():
 
     print(f"Starting model training with following configuration: {model_pre}")
     config.override("experiment_dir", model_dir)
-    print(config)
-    # exit
     cil_dataloader = CILDataLoader(DATA_PATH, config.NUM_WORKERS)
     n_m, n_u, train_r, train_m, test_r, test_m = next(iter(cil_dataloader))
 

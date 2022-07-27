@@ -22,13 +22,13 @@ class Singleton(type):
 class Config(object, metaclass=Singleton):
     # experiment
     project = "cil-project"
-    entity = "gsaltintas"
+    entity = "meowtrix-purrdiction"
     experiment_dir = "."  # "/cluster/home/galtintas/scratch/"
     experiment_type = "train"  # "optuna", "train", "gridsearch"
     algo = "svd"  # options: "svd", "svdpp", "glocal_k"
     use_wandb = False
-    seed = 1234 #42
-    train_size = 0.8  # train-val split ratio
+    seed = 1234 
+    train_size = 0.9  # train-val split ratio
 
     # optuna
     n_trials = 100
@@ -75,7 +75,7 @@ class Config(object, metaclass=Singleton):
     gk_size = 5
     lambda_2 = 20.  # l2 regularisation
     lambda_s = 0.006
-    iter_p = 5  # optimisation
+    iter_p = 5  # optimization
     iter_f = 5
     epoch_p = 30
     epoch_f = 80

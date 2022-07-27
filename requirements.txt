@@ -12,3 +12,6 @@ tensorboardX
 wandb==0.12.18
 transformers
 matplotlib
+typing
+typing_extensions
+torchmetrics

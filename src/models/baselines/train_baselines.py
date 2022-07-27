@@ -1,6 +1,4 @@
-import math
-import os
-import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -11,12 +9,10 @@ from surprise import (
     CoClustering,
     Dataset,
     KNNBaseline,
-    KNNBasic,
     Reader,
     SlopeOne,
     SVDpp,
 )
-from surprise.model_selection import GridSearchCV
 
 from utils import DATA_PATH, Config, script_init_common
 
@@ -53,7 +49,7 @@ def get_data():
 
     train_users, train_movies, train_predictions = extract_users_items_predictions(
         train_pd
-    )  # use whole data bc doing gridsearchcv
+    )  
     train_df = pd.DataFrame()
     train_df["users"] = train_users
     train_df["movies"] = train_movies
@@ -85,6 +81,7 @@ def get_data():
 
 def run_baseline_training():
     data, valid_data, sub_data, sub_users, sub_movies = get_data()
+    Path(config.experiment_dir).mkdir(exist_ok=True, parents=True)
     if config.algo == "svd":
         params = {
             "n_factors": config.n_factors,
@@ -145,8 +142,9 @@ def run_baseline_training():
     svd_df["users"] = sub_users
     svd_df["movies"] = sub_movies
     svd_df["preds"] = sub_preds
-    svd_df.to_csv(f"./results/{config.algo}preds.csv", index=False)
-    print(f"Saved predictions for {config.algo}")
+    file_name = Path(config.experiment_dir, config.algo, "preds.csv").as_posix()
+    svd_df.to_csv(file_name, index=False)
+    print(f"Saved predictions for {config.algo} at {file_name}")
 
 
 if __name__ == "__main__":

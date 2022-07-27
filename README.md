@@ -46,7 +46,7 @@ The setup script will create a database file in the main directory by default, w
 We provide a single entry point for coherence and ease of use `src/train.py`. This script accepts command line arguments (please see `src/utils/config.py` for the complete list of parameters or examine corresponding sections for relevant arguments).
 
 - **Euler**:
-    - Modify `train.sh` accordingly and run `bsub < scripts/train.sh` on Euler to submit an LSF job.
+    - We provide LSF job scripts under `scripts` folder. You may run `bsub < scripts/euler_train_glocalk.sh` on Euler to submit an LSF job.
 - **Local Machine**:
     - Sample training commands for each implemented algorithm can be found in their corresponding section.
 
@@ -128,7 +128,7 @@ Please note that depending on the hyperparameter choice, GLocal-K may have 6 to 
 
 ### Optuna
 ```bash
-python -m train --use-wandb True --experiment-dir experiments \
+python -m train --use-wandb False --experiment-dir experiments \
      --experiment-type optuna --algo glocal_k \
     --n-trials 20  --enable-pruning True \
     --NUM-WORKERS 1 --iter-p=5 --iter-f=5 \
@@ -143,11 +143,22 @@ python -m train --use-wandb True --experiment-dir experiments \
     --use-storage=False
 ```
 ### Training
+Below you can find the command we used to get our best prediction, even though we fix seeds, please account for small deviations in the final rmse.
+
 ```bash
 python -m train --use-wandb False --experiment-dir experiments \
      --experiment-type train --algo glocal_k \
-    --NUM-WORKERS 1  --n-hid 1000  --n-dim 5  --n-layers 2  --gk-size 5 \
+    --NUM-WORKERS 8  --n-hid 1000  --n-dim 5  --n-layers 2  --gk-size 5 \
     --lambda-2 20  --lambda-s 0.006  --iter-p 5  --iter-f 5 \
      --epoch-p 30 --epoch-f 80 --dot-scale 1 --seed 1234 \
-    --lr-fine 0.1 --lr-pre 0.1 --optimizer lbfgs 
+    --lr-fine 0.1 --lr-pre 0.1 --optimizer lbfgs --lr-scheduler none
+```
+Euler:
+```bash
+python -m train --use-wandb False --experiment-dir $SCRATCH/cil \
+     --experiment-type train --algo glocal_k \
+    --NUM-WORKERS 8  --n-hid 1000  --n-dim 5  --n-layers 2  --gk-size 5 \
+    --lambda-2 20  --lambda-s 0.006  --iter-p 5  --iter-f 5 \
+     --epoch-p 30 --epoch-f 80 --dot-scale 1 --seed 1234 \
+    --lr-fine 0.1 --lr-pre 0.1 --optimizer lbfgs --lr-scheduler none
 ```

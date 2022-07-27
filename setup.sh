@@ -105,9 +105,9 @@ fi
 if [ ! -d "${SCRATCH}/${course}_env" ]; then
     echo "Creating virtual env at ${SCRATCH}/${course}_env"
     python -m venv "${SCRATCH}/${course}_env"
-    python -m pip install --upgrade pip
 fi
 source "${SCRATCH}/${course}_env/bin/activate"
+python -m pip install --upgrade pip
 
 if [ ! -d "${HOME}/${course}" ]; then
     echo; echo "Repository not available, please check configuration."

@@ -1,8 +1,8 @@
 import time
 from pathlib import Path
+from shutil import copy
 
 import pytorch_lightning as pl
-import torch
 import wandb
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
@@ -17,44 +17,63 @@ config = Config()
 
 
 def train_glocal_k():
-    model_pre = f'nhid-{config.n_hid}-ndim--{config.n_dim}-layers-{config.n_layers}-lambda2-{config.lambda_2}-lambdas-{config.lambda_s}-iterp-{config.iter_p}-iterf-{config.iter_f}-gk-{config.gk_size}-epochp-{config.epoch_p}-epochf-{config.epoch_f}-dots-{config.dot_scale}_'
-    model_dir = Path(config.experiment_dir, f'{model_pre}/{time.time():.0f}')
+    n_hid = config.n_hid  # 1000 #500
+    n_dim = config.n_dim  # 5
+    n_layers = config.n_layers  # 2 #3
+    gk_size = config.gk_size  # 5 #7
+    lambda_2 = config.lambda_2  # 20.  # l2 regularisation
+    lambda_s = config.lambda_s  # 0.006
+    iter_p = config.iter_p  # 5  # optimisation
+    iter_f = config.iter_f  # 5
+    epoch_p = config.epoch_p  # 30
+    epoch_f = config.epoch_f  # 80
+    dot_scale = config.dot_scale  # 1  # scaled dot product
+    seed = config.seed  # 1234
+    lr_pre = config.lr_pre  # 1e-1
+    lr_fine = config.lr_fine  # 1e-1
+    iter_p = config.iter_p  # 5
+    iter_f = config.iter_f  # 5
+    dot_scale = config.dot_scale  # 1
+    # setup model directory
+    model_pre = f"nhid-{n_hid}-ndim--{n_dim}-layers-{n_layers}-lambda2-{lambda_2}-lambdas-{lambda_s}-iterp-{iter_p}-iterf-{iter_f}-gk-{gk_size}-epochp-{epoch_p}-epochf-{epoch_f}-dots-{dot_scale}_"
+    model_dir = Path(config.experiment_dir, f"{model_pre}/{time.time():.0f}")
     model_dir.mkdir(exist_ok=True, parents=True)
-    model_dir.joinpath('results').mkdir()
+    model_dir.joinpath("results").mkdir()
     model_dir = model_dir.as_posix()
-    print(f'Starting model training with following configuration: {model_pre}')
-    config.override('experiment_dir', model_dir)
-    
+
+    print(f"Starting model training with following configuration: {model_pre}")
+    config.override("experiment_dir", model_dir)
+    print(config)
+    # exit
     cil_dataloader = CILDataLoader(DATA_PATH, config.NUM_WORKERS)
     n_m, n_u, train_r, train_m, test_r, test_m = next(iter(cil_dataloader))
 
     if config.use_wandb:
         wandb.init(
-            project="cil-project",
-            entity="gsaltintas",
-            settings=wandb.Settings(start_method="fork")
+            project=config.project,
+            entity=config.entity,
+            settings=wandb.Settings(start_method="fork"),
         )
         wandb_logger = WandbLogger(
-            project="cil-project",
+            project=config.project,
             log_model=False,
-            entity="gsaltintas",
+            entity=config.entity,
         )
         logger = wandb_logger
         wandb.config.update(config.get_all_key_values())
         print("wandb initialized")
     else:
-        logger = TensorBoardLogger(
-            save_dir=config.experiment_dir, log_graph=True)
+        logger = TensorBoardLogger(save_dir=config.experiment_dir, log_graph=True)
 
     glocal_k_pre = GLocalKPre(
-        config.n_hid,
-        config.n_dim,
-        config.n_layers,
-        config.lambda_2,
-        config.lambda_s,
-        config.iter_p,
+        n_hid,
+        n_dim,
+        n_layers,
+        lambda_2,
+        lambda_s,
+        iter_p,
         n_u,
-        lr=config.lr_pre,
+        lr=lr_pre,
         optim=config.optimizer,
     )
     pretraining_checkpoint = pl.callbacks.ModelCheckpoint(
@@ -65,23 +84,27 @@ def train_glocal_k():
         mode="min",
         save_last=True,
     )
-    lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
+    lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval="epoch")
     pretraining_trainer = pl.Trainer(
         callbacks=[pretraining_checkpoint, lr_monitor],
-        max_epochs=config.epoch_p,
+        max_epochs=epoch_p,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
         logger=logger,
     )
     pretraining_trainer.fit(glocal_k_pre, cil_dataloader, cil_dataloader)
+    pre_ckpt = f"{config.experiment_dir}/checkpoints/pre_last.ckpt"
+    copy(pretraining_checkpoint.last_model_path, pre_ckpt)
+    pre_ckpt = f"{config.experiment_dir}/checkpoints/pre_best.ckpt"
+    copy(pretraining_checkpoint.best_model_path, pre_ckpt)
 
     glocal_k_fine = GLocalKFine(
-        config.gk_size,
-        config.iter_f,
-        config.dot_scale,
+        gk_size,
+        iter_f,
+        dot_scale,
         n_m,
-        pretraining_checkpoint.best_model_path,
-        lr=config.lr_fine,
+        pre_ckpt,
+        lr=lr_fine,
         optim=config.optimizer,
     )
     finetuning_checkpoint = pl.callbacks.ModelCheckpoint(
@@ -94,17 +117,22 @@ def train_glocal_k():
     )
     finetuning_trainer = pl.Trainer(
         callbacks=[finetuning_checkpoint, lr_monitor],
-        max_epochs=config.epoch_f,
+        max_epochs=epoch_f,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
         logger=logger,
     )
     finetuning_trainer.fit(glocal_k_fine, cil_dataloader, cil_dataloader)
-    # glocal_k_fine = GLocalKFine.load_from_checkpoint(finetuning_checkpoint.best_model_path)
+    glocal_k_fine = GLocalKFine.load_from_checkpoint(
+        finetuning_checkpoint.best_model_path
+    )
     glocal_k_fine.eval()
     pred = glocal_k_fine(train_r)
-    submit(DATA_PATH, pred.detach().numpy(), Path(
-        config.experiment_dir, 'results').as_posix())
+    submit(
+        DATA_PATH,
+        pred.detach().numpy(),
+        Path(config.experiment_dir, "results").as_posix(),
+    )
 
 
 if __name__ == "__main__":

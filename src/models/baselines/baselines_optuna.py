@@ -16,9 +16,6 @@ from .SVD import SVD_, SVDpp_
 
 logging.basicConfig(format="%(process)d-%(levelname)s-%(message)s")
 logger = logging.getLogger(__name__)
-config = Config()
-experiment_dir = Path(f"{config.experiment_dir}")
-experiment_dir.mkdir(exist_ok=True, parents=True)
 
 
 def extract_users_items_predictions(data_pd):
@@ -140,7 +137,10 @@ def run_optuna_baselines():
     Run the optuna search for the baselines svd and svdpp
     saves a submission file for each trial
     """
-
+    global config, experiment_dir
+    config = Config()
+    experiment_dir = Path(f"{config.experiment_dir}")
+    experiment_dir.mkdir(exist_ok=True, parents=True)
     storage = None
     if config.use_storage:
         storage = optuna.storages.RDBStorage(

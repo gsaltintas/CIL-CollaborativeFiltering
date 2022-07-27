@@ -3,6 +3,7 @@ from typing import Optional
 import optuna
 import pytorch_lightning as pl
 import torch
+import wandb
 
 from .glocalk_models import GlobalKernel, global_conv
 from .pretraining import GLocalKPre
@@ -18,24 +19,24 @@ class GLocalKFine(pl.LightningModule):
         local_kernel_checkpoint,
         lr: float = 0.1,
         trial: Optional[optuna.trial.Trial] = None,
-        optim: Optional[str] = 'lbfgs',
-        *args, 
-        **kwargs
+        optim: Optional[str] = "lbfgs",
+        scheduler: Optional[str] = "none",
+        *args,
+        **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters()
 
         self.iter_f = iter_f
 
-        self.local_kernel = GLocalKPre.load_from_checkpoint(
-            local_kernel_checkpoint)
-        self.local_kernel.mode = 'train'
+        self.local_kernel = GLocalKPre.load_from_checkpoint(local_kernel_checkpoint)
+        self.local_kernel.mode = "train"
 
         self.global_kernel = GlobalKernel(n_m, gk_size, dot_scale)
         self.lr = lr
         self.trial = trial
         self.optim = optim
-
+        self.scheduler = scheduler
 
     def forward(self, x):
         y_dash, _ = self.local_kernel(x)
@@ -61,8 +62,6 @@ class GLocalKFine(pl.LightningModule):
         diff = train_m * (train_r - pred_f)
         sqE = torch.sum(diff**2) / 2
         loss_f = sqE + reg_losses
-        self.log('fine_train/loss_f', loss_f)
-        self.log('fine_train/sqE', sqE )
 
         return loss_f
 
@@ -71,37 +70,50 @@ class GLocalKFine(pl.LightningModule):
 
         pred_f = self(train_r)
 
-        error_train = (train_m * (torch.clip(pred_f, 1., 5.) -
-                       train_r) ** 2).sum() / torch.sum(train_m)
+        error_train = (
+            train_m * (torch.clip(pred_f, 1.0, 5.0) - train_r) ** 2
+        ).sum() / torch.sum(train_m)
         train_rmse = torch.sqrt(error_train)
 
-        error = (test_m * (torch.clip(pred_f, 1., 5.) - test_r)
-                 ** 2).sum() / torch.sum(test_m)
+        error = (
+            test_m * (torch.clip(pred_f, 1.0, 5.0) - test_r) ** 2
+        ).sum() / torch.sum(test_m)
         test_rmse = torch.sqrt(error)
 
-        self.log('fine_train_rmse', train_rmse)
-        self.log('fine_test_rmse', test_rmse)
-        self.log('test_rmse', test_rmse)
+        self.log("train_rmse", train_rmse)
+        self.log("test_rmse", test_rmse)
+        self.log("fine_train_rmse", train_rmse)
+        self.log("fine_test_rmse", test_rmse)
         if self.trial is not None:
             self.trial.report(test_rmse.item(), step=self.global_step)
 
     def configure_optimizers(self):
-        if self.optim == 'adam':
+        if self.optim == "adam":
             optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
-        elif self.optim == 'lbfgs':
+        elif self.optim == "lbfgs":
             optimizer = torch.optim.LBFGS(
-            self.parameters(), max_iter=self.iter_f, history_size=10, lr=self.lr)
+                self.parameters(), max_iter=self.iter_f, history_size=10, lr=self.lr
+            )
+        elif self.optim == "sgd":
+            optimizer = torch.optim.SGD(self.parameters(), lr=self.lr)
         else:
-            raise ValueError('Only adam and lbfgs options are possible for optimizer.')
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, patience=4, factor=0.5, min_lr=1e-1)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer,
-                                                                     gamma=0.995)
+            raise ValueError(
+                "Only adam, lbfgs, and sgd options are possible for optimizer."
+            )
+        if self.scheduler == "exponential":
+            scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                optimizer=optimizer, gamma=0.995
+            )
+        elif self.scheduler == "reducelronplateau":
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, patience=4, factor=0.5, min_lr=1e-3
+            )
+        elif self.scheduler == "none":
+            return optimizer
+        else:
+            raise ValueError(f"Unkown lr scheduler: {self.scheduler}")
 
-
-        return {'optimizer': optimizer,
-                'lr_scheduler': {
-                    'scheduler': scheduler,
-                    'monitor': 'test_rmse'
-                }
-                }
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {"scheduler": scheduler, "monitor": "test_rmse"},
+        }

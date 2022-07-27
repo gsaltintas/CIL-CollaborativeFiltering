@@ -2,10 +2,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-from utils import Config
-
-config = Config()
-
 
 def extract_users_items_predictions(data_pd):
     users, movies = [
@@ -18,7 +14,7 @@ def extract_users_items_predictions(data_pd):
     return users, movies, predictions
 
 
-def load_data_cil(path="./", frac=(1 - config.train_size), seed=config.seed):
+def load_data_cil(path="./", frac=0.1):
     data_pd = pd.read_csv(path + "data_train.csv")
     users, movies, predictions = extract_users_items_predictions(data_pd)
     data = pd.DataFrame.from_dict(
@@ -36,7 +32,6 @@ def load_data_cil(path="./", frac=(1 - config.train_size), seed=config.seed):
     for i, m in enumerate(np.unique(data["itemId"]).tolist()):
         mdict[m] = i
 
-    np.random.seed(seed)
     idx = np.arange(n_r)
     np.random.shuffle(idx)
 

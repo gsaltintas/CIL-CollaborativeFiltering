@@ -10,10 +10,10 @@ from utils import script_init_common
 
 logging.basicConfig(format="%(process)d-%(levelname)s-%(message)s")
 logger = logging.getLogger(__name__)
-config = script_init_common()
 
 
 if __name__ == "__main__":
+    config = script_init_common()
     if config.experiment_type == "optuna":
         if config.algo == "svd" or config.algo == "svdpp":
             run_optuna_baselines()

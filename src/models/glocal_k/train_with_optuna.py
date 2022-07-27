@@ -99,8 +99,6 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
         max_epochs=epoch_p,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
-        gpus=1 if torch.cuda.is_available() else None,
-        accelerator='gpu' if torch.cuda.is_available() else None,
         logger=logger,
     )
     pretraining_trainer.fit(glocal_k_pre, cil_dataloader, cil_dataloader)
@@ -123,7 +121,6 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
         mode="min",
         save_last=True,
     )
-    # fine_lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
     callbacks_fine=[finetuning_checkpoint, lr_monitor]
     if config.enable_pruning:
         fine_pruning_callback = PyTorchLightningPruningCallback(
@@ -134,8 +131,6 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
         max_epochs=epoch_f,
         log_every_n_steps=1,
         replace_sampler_ddp=False,
-        gpus=1 if torch.cuda.is_available() else None,
-        accelerator='gpu' if torch.cuda.is_available() else None,
         logger=logger,
     )
     finetuning_trainer.fit(glocal_k_fine, cil_dataloader, cil_dataloader)

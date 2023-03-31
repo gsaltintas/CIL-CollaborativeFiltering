@@ -1,3 +1,4 @@
+import os
 import time
 from pathlib import Path
 
@@ -52,13 +53,13 @@ def objective(trial: optuna.trial.Trial, cil_dataloader: CILDataLoader) -> float
         wandb.join()
         wandb.init(
             project="cil-project",
-            entity="gsaltintas",
+            entity=os.environ.get("WANDB_ENTITY"),
             settings=wandb.Settings(start_method="fork")
         )
         wandb_logger = WandbLogger(
             project="cil-project",
             log_model=False,
-            entity="gsaltintas",
+            entity=os.environ.get("WANDB_ENTITY"),
         )
         logger = wandb_logger
         wandb.config.update(config.get_all_key_values())

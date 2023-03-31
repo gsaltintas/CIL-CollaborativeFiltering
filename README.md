@@ -5,6 +5,8 @@
 Members: Flavia Cavaliere, Gül Sena Altıntaş, Martynas Noruišis, William Andersson
 </center>
 
+ETH students taking Computational Intelligence Laboratory please treat the material according to the [ETH Code of Conduct](https://respekt.ethz.ch/en/code-of-conduct.html).
+
 ## Paper &#128394;
 This is the implementation accompanying *Bayesian Optimization on Kernel-Trained Auto-Encoders for Collaborative Filtering*.
 

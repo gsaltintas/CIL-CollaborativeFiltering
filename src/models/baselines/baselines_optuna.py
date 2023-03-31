@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import numpy as np
@@ -162,7 +163,7 @@ def run_optuna_baselines():
 
         wandb_kwargs = {
             "project": "cil-project",
-            "entity": "gsaltintas",
+            "entity": os.environ.get("WANDB_ENTITY"),
             "config": config.get_all_key_values(),
         }
         wandbc = WeightsAndBiasesCallback(

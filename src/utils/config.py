@@ -23,7 +23,7 @@ class Config(object, metaclass=Singleton):
     # experiment
     project = "cil-project"
     entity = "meowtrix-purrdiction"
-    experiment_dir = "."  # "/cluster/home/galtintas/scratch/"
+    experiment_dir = "." 
     experiment_type = "train"  # "optuna", "train", "gridsearch"
     algo = "svd"  # options: "svd", "svdpp", "glocal_k"
     use_wandb = False

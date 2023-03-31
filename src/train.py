@@ -1,10 +1,8 @@
 import logging
+import os
 
-from models.baselines import (
-    run_baseline_training,
-    run_grid_search,
-    run_optuna_baselines,
-)
+from models.baselines import (run_baseline_training, run_grid_search,
+                              run_optuna_baselines)
 from models.glocal_k import run_optuna_glocal_k, train_glocal_k
 from utils import script_init_common
 
@@ -14,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     config = script_init_common()
+    if config.use_wandb and not os.environ.get('WANDB_ENTITY'):
+        raise KeyError('Wandb entity not defined please, define WANDB_ENTITY in the .bashrc or run the experiments without wandb logging.')
     if config.experiment_type == "optuna":
         if config.algo == "svd" or config.algo == "svdpp":
             run_optuna_baselines()
